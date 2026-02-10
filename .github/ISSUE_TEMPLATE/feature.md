@@ -8,7 +8,11 @@ assignees: ''
 ---
 
 ## Feature Description
-Brief description of the feature.
+Describe the functionality at a high level.
+
+## Acceptance Criteria
+- [ ] Functional behavior implemented
+- [ ] Integrated with related components
 
 ## Notes
-Additional context or constraints (optional).
+Additional details or constraints.
