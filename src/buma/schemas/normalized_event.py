@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 # This will chnage only when we make a breaking change to the contract.
 SCHEMA_VERSION = "1.0"
@@ -12,6 +12,7 @@ class RepoRef(BaseModel):
     """
     Minimal repository identity + privacy flags needed by the triage pipeline.
     """
+    model_config = ConfigDict(extra="forbid")
     id: int = Field(
         ...,
         description="GitHub repository numeric ID (stable identifier).",
@@ -33,6 +34,7 @@ class IssueRef(BaseModel):
     """
     Minimal issue snapshot fields needed to triage, classify, and assign.
     """
+    model_config = ConfigDict(extra="forbid")
     number: int = Field(
         ...,
         description="Issue number within the repository (used for API patch/update).",
@@ -63,12 +65,12 @@ class IssueRef(BaseModel):
         description="Issue title used in ML features and dashboard summaries.",
         examples=["Checkout fails on Safari"],
     )
-    body: Optional[str] = Field(
+    body: str | None = Field(
         default=None,
         description="Issue body text (may be null/empty). Used for NLP/ML features.",
         examples=["Steps to reproduce: ..."],
     )
-    labels: List[str] = Field(
+    labels: list[str] = Field(
         default_factory=list,
         description="List of label *names* (strings only) on the issue at ingestion time.",
         examples=[["bug", "p1", "frontend"]],
@@ -157,13 +159,13 @@ class NormalizedEvent(BaseModel):
         description="Issue snapshot used for triage, classification, and assignment.",
     )
 
-    sender_login: Optional[str] = Field(
+    sender_login: str | None = Field(
         default=None,
         description="GitHub username (login) of the actor that triggered the event (if present).",
         examples=["octocat"],
     )
 
-    trace_id: Optional[str] = Field(
+    trace_id: str | None = Field(
         default=None,
         description=(
             "Correlation ID for distributed tracing/log correlation "
