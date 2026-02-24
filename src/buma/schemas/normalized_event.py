@@ -12,6 +12,7 @@ class RepoRef(BaseModel):
     """
     Minimal repository identity + privacy flags needed by the triage pipeline.
     """
+
     model_config = ConfigDict(extra="forbid")
     id: int = Field(
         ...,
@@ -34,6 +35,7 @@ class IssueRef(BaseModel):
     """
     Minimal issue snapshot fields needed to triage, classify, and assign.
     """
+
     model_config = ConfigDict(extra="forbid")
     number: int = Field(
         ...,
@@ -99,6 +101,7 @@ class NormalizedEvent(BaseModel):
     Goal: stable, versioned, minimal event shape that supports triage + assignment
     without leaking full raw GitHub payloads into downstream systems.
     """
+
     # Prevent silent drift: if either side sends unknown fields, validation fails fast.
     model_config = ConfigDict(extra="forbid")
 
@@ -110,19 +113,13 @@ class NormalizedEvent(BaseModel):
 
     event_id: str = Field(
         ...,
-        description=(
-            "Internal idempotency key for deduplication. "
-            "For MVP, set this equal to delivery_id."
-        ),
+        description=("Internal idempotency key for deduplication. " "For MVP, set this equal to delivery_id."),
         examples=["9d3d6c20-2a71-11ef-9a3b-acde48001122"],
     )
 
     delivery_id: str = Field(
         ...,
-        description=(
-            "GitHub delivery ID from the X-GitHub-Delivery header "
-            "(unique per webhook delivery)."
-        ),
+        description=("GitHub delivery ID from the X-GitHub-Delivery header " "(unique per webhook delivery)."),
         examples=["9d3d6c20-2a71-11ef-9a3b-acde48001122"],
     )
 
@@ -168,8 +165,7 @@ class NormalizedEvent(BaseModel):
     trace_id: str | None = Field(
         default=None,
         description=(
-            "Correlation ID for distributed tracing/log correlation "
-            "(e.g., propagated from gateway request context)."
+            "Correlation ID for distributed tracing/log correlation " "(e.g., propagated from gateway request context)."
         ),
         examples=["trace-01J2Z8Y6Z3J8Q9K7V5H2K1M0N9"],
     )
