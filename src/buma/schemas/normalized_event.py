@@ -113,7 +113,7 @@ class NormalizedEvent(BaseModel):
 
     event_id: str = Field(
         ...,
-        description=("Internal idempotency key for deduplication. " "For MVP, set this equal to delivery_id."),
+        description=("Internal idempotency key for deduplication. " "For MVP, we will set this equal to delivery_id."),
         examples=["9d3d6c20-2a71-11ef-9a3b-acde48001122"],
     )
 
