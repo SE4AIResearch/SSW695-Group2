@@ -11,8 +11,7 @@ from sqlalchemy import (
     Integer,
     Text,
     UniqueConstraint,
-    func,
-    text
+    text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -216,7 +215,7 @@ class TriageDecision(Base):
         ),
         Index("ix_triage_decision_repo_issue_time", "repo_id", "issue_number"),
     )
-    
+
 
 class DLQRecord(Base):
     __tablename__ = "dlq_records"
@@ -227,9 +226,17 @@ class DLQRecord(Base):
     event_payload: Mapped[dict] = mapped_column(JSONB, nullable=False)  # serialised NormalizedEvent
     error_message: Mapped[str] = mapped_column(Text, nullable=False)
     error_type: Mapped[str] = mapped_column(Text, nullable=False)  # CLASSIFICATION | ASSIGNMENT | GITHUB_PATCH
-    status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'FAILED'"))  # FAILED | REPLAY_REQUESTED | REPLAY_SUCCEEDED | REPLAY_FAILED
+    status: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        server_default=text("'FAILED'")
+    )  # FAILED | REPLAY_REQUESTED | REPLAY_SUCCEEDED | REPLAY_FAILED
     attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("1"))
-    last_error_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+    last_error_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()")
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
 
     __table_args__ = (
