@@ -38,12 +38,8 @@ class WebhookDelivery(Base):
 
     received_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    status: Mapped[str] = mapped_column(
-        Text, nullable=False, server_default=text("'RECEIVED'")
-    )
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'RECEIVED'"))
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
 
 
 class RepoConfig(Base):
@@ -57,16 +53,10 @@ class RepoConfig(Base):
     installation_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     repo_full_name: Mapped[str] = mapped_column(Text, nullable=False)
 
-    config: Mapped[dict] = mapped_column(
-        JSONB, nullable=False, server_default=text("'{}'::jsonb")
-    )
+    config: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
 
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
-    updated_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+    updated_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
 
 
 class DeveloperProfile(Base):
@@ -84,28 +74,16 @@ class DeveloperProfile(Base):
 
     github_login: Mapped[str] = mapped_column(Text, nullable=False)
 
-    skills: Mapped[list] = mapped_column(
-        JSONB, nullable=False, server_default=text("'[]'::jsonb")
-    )
+    skills: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
 
-    max_capacity: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("5")
-    )
-    open_assignments: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("0")
-    )
+    max_capacity: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("5"))
+    open_assignments: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
 
     # Optional optimistic concurrency knob for updates
-    version: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("0")
-    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
 
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
-    updated_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+    updated_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
 
     __table_args__ = (
         UniqueConstraint("repo_id", "github_login", name="uq_dev_profile_repo_login"),
@@ -137,22 +115,14 @@ class IssueSnapshot(Base):
     title: Mapped[str] = mapped_column(Text, nullable=False)
     body: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    labels: Mapped[list[str]] = mapped_column(
-        ARRAY(Text), nullable=False, server_default=text("ARRAY[]::TEXT[]")
-    )
+    labels: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False, server_default=text("ARRAY[]::TEXT[]"))
 
     author_login: Mapped[str] = mapped_column(Text, nullable=False)
 
-    issue_created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    issue_updated_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    issue_created_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False)
+    issue_updated_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    snapshot_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    snapshot_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
 
     __table_args__ = (
         Index(
@@ -182,9 +152,7 @@ class TriageDecision(Base):
     )
     issue_number: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    decided_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    decided_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
 
     predicted_priority: Mapped[str | None] = mapped_column(Text, nullable=True)
     predicted_category: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -193,20 +161,12 @@ class TriageDecision(Base):
     selected_assignee_login: Mapped[str | None] = mapped_column(Text, nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    patch_state: Mapped[str] = mapped_column(
-        Text, nullable=False, server_default=text("'DECIDED'")
-    )
-    patch_attempts: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default=text("0")
-    )
+    patch_state: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'DECIDED'"))
+    patch_attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
-    updated_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=text("now()")
-    )
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+    updated_at: Mapped[object] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
 
     __table_args__ = (
         CheckConstraint(
@@ -227,15 +187,11 @@ class DLQRecord(Base):
     error_message: Mapped[str] = mapped_column(Text, nullable=False)
     error_type: Mapped[str] = mapped_column(Text, nullable=False)  # CLASSIFICATION | ASSIGNMENT | GITHUB_PATCH
     status: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-        server_default=text("'FAILED'")
+        Text, nullable=False, server_default=text("'FAILED'")
     )  # FAILED | REPLAY_REQUESTED | REPLAY_SUCCEEDED | REPLAY_FAILED
     attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("1"))
     last_error_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=text("now()")
+        DateTime(timezone=True), nullable=False, server_default=text("now()")
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
 
