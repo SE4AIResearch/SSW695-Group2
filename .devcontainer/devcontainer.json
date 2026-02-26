@@ -1,9 +1,11 @@
 {
     "name": "buma-dev",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "context": ".."
-    },
+    "dockerComposeFile": [
+        "../docker-compose.yml",
+        "docker-compose.devcontainer.yml"
+    ],
+    "service": "app",
+    "workspaceFolder": "/workspace",
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
             "moby": false
@@ -14,7 +16,7 @@
             "minikube": "none"
         }
     },
-    "postCreateCommand": "uv sync --dev",
+    "postCreateCommand": "uv sync --dev && uv run alembic upgrade head",
     "customizations": {
         "vscode": {
             "extensions": [

@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "Intelligent Bug Triaging & Assignment System"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "alembic>=1.18.4",
+    "psycopg[binary]>=3.3.3",
+    "pydantic>=2.12.5",
+    "sqlalchemy>=2.0.46",
+]
 
 [dependency-groups]
 dev = [
@@ -13,6 +18,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-asyncio",
+    "python-dotenv>=1.2.1",
 ]
 
 [tool.ruff]
@@ -21,6 +27,9 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/versions/*.py" = ["E501", "I001", "UP007", "UP035"]
 
 [tool.black]
 target-version = ["py311"]
