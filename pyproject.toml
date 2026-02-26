@@ -34,7 +34,6 @@ line-length = 120
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-fail_under = 25
 
 [build-system]
 requires = ["setuptools"]
