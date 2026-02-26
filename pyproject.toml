@@ -18,6 +18,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-asyncio",
+    "python-dotenv>=1.2.1",
 ]
 
 [tool.ruff]
@@ -26,6 +27,9 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/versions/*.py" = ["E501", "I001", "UP007", "UP035"]
 
 [tool.black]
 target-version = ["py311"]

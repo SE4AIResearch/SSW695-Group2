@@ -27,7 +27,7 @@ class WebhookDelivery(Base):
 
     __tablename__ = "webhook_delivery"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     delivery_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     event_name: Mapped[str] = mapped_column(Text, nullable=False)
     action: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -49,7 +49,7 @@ class RepoConfig(Base):
 
     __tablename__ = "repo_config"
 
-    repo_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    repo_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     installation_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     repo_full_name: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -66,7 +66,7 @@ class DeveloperProfile(Base):
 
     __tablename__ = "developer_profile"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
     repo_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("repo_config.repo_id", ondelete="CASCADE"), nullable=False
@@ -99,7 +99,7 @@ class IssueSnapshot(Base):
 
     __tablename__ = "issue_snapshot"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
     event_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     delivery_id: Mapped[str] = mapped_column(Text, nullable=False)
@@ -142,7 +142,7 @@ class TriageDecision(Base):
 
     __tablename__ = "triage_decision"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
     event_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     delivery_id: Mapped[str] = mapped_column(Text, nullable=False)
