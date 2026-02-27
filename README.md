@@ -140,6 +140,15 @@ The capstone success criterion is “**works every time**” for the P0 pipeline
 
 Add a short file under `contributors/` (example: `contributors/your-name.md`) with your name, role, and GitHub handle.
 
+## Resources
+- GitHub Webhooks: https://docs.github.com/webhooks
+- Validating Github Webhook payloads: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+- HMAC verification: https://docs.github.com/webhooks/securing-your-webhooks#validating-payloads-from-github
+- Python HMAC: https://docs.python.org/3/library/hmac.html
+- Python hashlib: https://docs.python.org/3/library/hashlib
+
+
+
 ## License
 
 A project license has not been added yet. Do not assume reuse permissions until a `LICENSE` file is present.
