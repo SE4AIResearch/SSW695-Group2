@@ -107,4 +107,3 @@ async def test_normalized_event_fields(service, mock_publisher):
     assert event.issue.number == 1
     assert event.issue.labels == ["bug"]
     assert event.sender_login == "octocat"
-
