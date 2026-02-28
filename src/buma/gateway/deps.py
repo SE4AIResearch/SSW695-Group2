@@ -7,6 +7,9 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from buma.core.config import Settings, get_settings
+from buma.gateway.publishers.queue import QueuePublisher
+from buma.gateway.repositories.webhook_delivery import WebhookDeliveryRepository
+from buma.gateway.services.ingest import IngestService
 
 
 @lru_cache
@@ -139,3 +142,14 @@ async def get_redis(
         yield client
     finally:
         await client.aclose()
+
+
+async def get_ingest_service(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    redis: Annotated[aioredis.Redis, Depends(get_redis)],
+) -> IngestService:
+    return IngestService(
+        session=db,
+        repo=WebhookDeliveryRepository(db),
+        publisher=QueuePublisher(redis),
+    )
