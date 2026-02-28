@@ -107,7 +107,7 @@ Local development and CI should run the same scripts (avoid duplicating logic in
 - Run the scripts locally before requesting review:
 
 ```bash
-./scripts/lint.sh
+./scripts/lint.sh # uv run ruff check . --fix | uv run ruff format .
 ./scripts/test.sh
 ./scripts/codegen.sh
 ```
@@ -139,6 +139,15 @@ The capstone success criterion is “**works every time**” for the P0 pipeline
 ### Adding yourself (optional)
 
 Add a short file under `contributors/` (example: `contributors/your-name.md`) with your name, role, and GitHub handle.
+
+## Resources
+- GitHub Webhooks: https://docs.github.com/webhooks
+- Validating Github Webhook payloads: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+- HMAC verification: https://docs.github.com/webhooks/securing-your-webhooks#validating-payloads-from-github
+- Python HMAC: https://docs.python.org/3/library/hmac.html
+- Python hashlib: https://docs.python.org/3/library/hashlib
+
+
 
 ## License
 
