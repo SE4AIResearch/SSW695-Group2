@@ -107,7 +107,7 @@ Local development and CI should run the same scripts (avoid duplicating logic in
 - Run the scripts locally before requesting review:
 
 ```bash
-./scripts/lint.sh
+./scripts/lint.sh # uv run ruff check . --fix | uv run ruff format .
 ./scripts/test.sh
 ./scripts/codegen.sh
 ```
