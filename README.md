@@ -107,7 +107,7 @@ Local development and CI should run the same scripts (avoid duplicating logic in
 - Run the scripts locally before requesting review:
 
 ```bash
-./scripts/lint.sh
+./scripts/lint.sh # uv run ruff check . --fix | uv run ruff format .
 ./scripts/test.sh
 ./scripts/codegen.sh
 ```
@@ -139,6 +139,54 @@ The capstone success criterion is “**works every time**” for the P0 pipeline
 ### Adding yourself (optional)
 
 Add a short file under `contributors/` (example: `contributors/your-name.md`) with your name, role, and GitHub handle.
+
+## Resources
+- GitHub Webhooks: https://docs.github.com/webhooks
+- Validating Github Webhook payloads: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+- HMAC verification: https://docs.github.com/webhooks/securing-your-webhooks#validating-payloads-from-github
+- Python HMAC: https://docs.python.org/3/library/hmac.html
+- Python hashlib: https://docs.python.org/3/library/hashlib
+
+## Example of Webhook Delivery from GitHub
+
+```text
+> POST /payload HTTP/1.1
+
+> X-GitHub-Delivery: 72d3162e-cc78-11e3-81ab-4c9367dc0958
+> X-Hub-Signature: sha1=7d38cdd689735b008b3c702edd92eea23791c5f6
+> X-Hub-Signature-256: sha256=d57c68ca6f92289e6987922ff26938930f6e66a2d161ef06abdf1859230aa23c
+> User-Agent: GitHub-Hookshot/044aadd
+> Content-Type: application/json
+> Content-Length: 6615
+> X-GitHub-Event: issues
+> X-GitHub-Hook-ID: 292430182
+> X-GitHub-Hook-Installation-Target-ID: 79929171
+> X-GitHub-Hook-Installation-Target-Type: repository
+
+> {
+>   "action": "opened",
+>   "issue": {
+>     "url": "https://api.github.com/repos/octocat/Hello-World/issues/1347",
+>     "number": 1347,
+>     ...
+>   },
+>   "repository" : {
+>     "id": 1296269,
+>     "full_name": "octocat/Hello-World",
+>     "owner": {
+>       "login": "octocat",
+>       "id": 1,
+>       ...
+>     },
+>     ...
+>   },
+>   "sender": {
+>     "login": "octocat",
+>     "id": 1,
+>     ...
+>   }
+> }
+```
 
 ## License
 
