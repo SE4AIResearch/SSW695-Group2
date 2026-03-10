@@ -53,9 +53,10 @@ class IngestService:
             repo_full_name=repo["full_name"],
             received_at=received_at,
         )
-        # TODO: Treat updated events as new instead of ignoring them. This may require changes to the NormalizedEvent schema and downstream consumers.
+        # TODO: Treat updated events as new instead of ignoring them. This may require changes to the NormalizedEvent
+        # schema and downstream consumers.
         if not is_new:
-            return IngestResult.DUPLICATE 
+            return IngestResult.DUPLICATE
 
         event = NormalizedEvent(
             schema_version=SCHEMA_VERSION,
