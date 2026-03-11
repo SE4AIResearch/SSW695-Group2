@@ -5,6 +5,7 @@ import logging
 import signal
 
 import redis.asyncio as aioredis
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from buma.core.config import get_settings
 from buma.worker.consumer import QueueConsumer
@@ -25,14 +26,17 @@ async def main() -> None:
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, stop_event.set)
 
+    engine = create_async_engine(settings.database_url, pool_pre_ping=True)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
     redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)
     try:
-        processor = EventProcessorService()
+        processor = EventProcessorService(session_factory=session_factory)
         consumer = QueueConsumer(redis=redis_client, processor=processor)
         await consumer.run_forever(stop_event=stop_event)
     finally:
         await redis_client.aclose()
-        logger.info("Redis connection closed.")
+        await engine.dispose()
+        logger.info("Connections closed.")
 
 
 if __name__ == "__main__":
