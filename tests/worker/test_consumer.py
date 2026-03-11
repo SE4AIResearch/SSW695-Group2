@@ -135,4 +135,3 @@ async def test_run_forever_processes_multiple_messages(consumer, mock_redis, moc
     mock_redis.brpop.side_effect = brpop_side_effect
     await consumer.run_forever(stop_event=stop_event)
     assert mock_processor.process.call_count == 3
-

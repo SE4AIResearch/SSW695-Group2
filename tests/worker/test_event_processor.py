@@ -37,6 +37,7 @@ async def test_process_completes_without_error():
     processor = EventProcessorService()
     await processor.process(_make_event())
 
+
 async def test_process_accepts_event_with_labels():
     event = _make_event()
     object.__setattr__(event.issue, "labels", ["bug", "p1"])
