@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from buma.db.models import RepoConfig
 from buma.schemas.normalized_event import NormalizedEvent
+from buma.worker.services.triage_engine import TriageEngine
 
 logger = logging.getLogger(__name__)
 
@@ -15,20 +16,25 @@ class EventProcessorService:
     """
     Orchestrates the full triage pipeline for a single NormalizedEvent.
 
-    Current state: placeholder — logs receipt only.
-
-    Planned steps (built incrementally):
-    1. Load RepoConfig from DB
-    2. Rule-based triage engine (category + priority)
-    3. Assignee selection (skills + capacity + optimistic locking)
-    4. Persist IssueSnapshot + TriageDecision
-    5. GitHub patch (labels, assignee, explanation comment)
+    Phases:
+    1. Log receipt
+    2. Load RepoConfig from DB — skip if repo not enrolled
+    3. Classify category + priority (TriageEngine) — skip if not a bug
+    4. Assignee selection (skills + capacity + optimistic locking)  [TODO]
+    5. Persist IssueSnapshot + TriageDecision                       [TODO]
+    6. GitHub patch (labels, assignee, explanation comment)         [TODO]
     """
 
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        triage_engine: TriageEngine | None = None,
+    ) -> None:
         self._session_factory = session_factory
+        self._engine = triage_engine or TriageEngine()
 
     async def process(self, event: NormalizedEvent) -> None:
+        # Phase 1 — log receipt
         logger.info(
             "event_id=%s repo=%s issue=#%d action=%s — received, loading config",
             event.event_id,
@@ -37,6 +43,7 @@ class EventProcessorService:
             event.action,
         )
 
+        # Phase 2 — load RepoConfig
         async with self._session_factory() as session:
             repo_config = await self._load_repo_config(session, event.repo.id)
 
@@ -48,11 +55,33 @@ class EventProcessorService:
             )
             return
 
+        # Phase 3 — classify
+        result = self._engine.classify(event.issue, repo_config.config)
+
+        if result.category != "bug":
+            logger.info(
+                "event_id=%s repo=%s issue=#%d — category=%s, not a bug, skipping",
+                event.event_id,
+                event.repo.full_name,
+                event.issue.number,
+                result.category,
+            )
+            return
+
         logger.info(
-            "event_id=%s repo=%s — config loaded, triage pending",
+            "event_id=%s repo=%s issue=#%d — category=%s priority=%s confidence=%.2f engine=%s",
             event.event_id,
             event.repo.full_name,
+            event.issue.number,
+            result.category,
+            result.priority,
+            result.confidence,
+            result.engine_version,
         )
+
+        # Phase 4 — assignee selection [TODO]
+        # Phase 5 — persist IssueSnapshot + TriageDecision [TODO]
+        # Phase 6 — GitHub patch [TODO]
 
     async def _load_repo_config(self, session: AsyncSession, repo_id: int) -> RepoConfig | None:
         result = await session.execute(select(RepoConfig).where(RepoConfig.repo_id == repo_id))
