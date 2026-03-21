@@ -10,6 +10,11 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     github_webhook_secret: str
 
+    # GitHub App credentials — required for Phase 6 (GitHub patch).
+    # If either is absent, Phase 6 is skipped and patch_state stays DECIDED.
+    github_app_id: int | None = None
+    github_app_private_key: str | None = None  # PEM content, newlines as \n
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from buma.core.config import get_settings
 from buma.worker.consumer import QueueConsumer
 from buma.worker.services.event_processor import EventProcessorService
+from buma.worker.services.github_client import GitHubClient
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,8 +30,22 @@ async def main() -> None:
     engine = create_async_engine(settings.database_url, pool_pre_ping=True)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)
+
+    github_client: GitHubClient | None = None
+    if settings.github_app_id and settings.github_app_private_key:
+        github_client = GitHubClient(
+            app_id=settings.github_app_id,
+            private_key_pem=settings.github_app_private_key,
+        )
+        logger.info("GitHub App client configured (app_id=%d)", settings.github_app_id)
+    else:
+        logger.warning("GITHUB_APP_ID or GITHUB_APP_PRIVATE_KEY not set — Phase 6 (GitHub patch) will be skipped")
+
     try:
-        processor = EventProcessorService(session_factory=session_factory)
+        processor = EventProcessorService(
+            session_factory=session_factory,
+            github_client=github_client,
+        )
         consumer = QueueConsumer(redis=redis_client, processor=processor)
         await consumer.run_forever(stop_event=stop_event)
     finally:
