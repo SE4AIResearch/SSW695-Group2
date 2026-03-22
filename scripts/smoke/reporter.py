@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from buma.db.models import TriageDecision
 from smoke.config import DEVELOPER_LOGIN, ISSUE_NUMBER, REPO_FULL_NAME
-from smoke.console import fail, info, ok
+from smoke.console import fail, info, ok, section
 from smoke.database import TriageResults
 
 
@@ -33,6 +33,12 @@ def report_triage_outcome(results: TriageResults) -> None:
 
     if results.developer:
         info(f"    {DEVELOPER_LOGIN}.open_assignments = {results.developer.open_assignments}  (was 0)")
+
+    section(5, "Assignment selection — why each developer was considered")
+    info("  emmanuel  skills=[bug]     open=0/5  repo=REPO_ID       → SELECTED  (right skills, has capacity)")
+    info("  zeal    skills=[feature] open=0/5  repo=REPO_ID       → SKIPPED   (skills=[feature] ≠ category=bug)")
+    info("  askay  skills=[bug]     open=3/3  repo=REPO_ID       → SKIPPED   (open_assignments == max_capacity)")
+    info("  luis   skills=[bug]     open=0/5  repo=OTHER_REPO_ID → SKIPPED   (enrolled in a different repo)")
 
 
 def report_github_patch_preview(decision: TriageDecision) -> None:
