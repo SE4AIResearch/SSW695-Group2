@@ -1,87 +1,103 @@
 #!/usr/bin/env python3
 """
-Buma end-to-end smoke test — validates the full Phases 1–5 pipeline locally.
-
-What it does:
-  1. Seeds the database with a RepoConfig + DeveloperProfile
-  2. Starts the gateway (uvicorn on :8000) as a background process
-  3. Sends a signed POST /webhook/github (exactly as GitHub would)
-  4. Runs the worker's consume-once loop to process the event
-  5. Queries the database and reports the triage outcome
-  6. Shows what would have been sent to GitHub (Phase 6 skipped — no App credentials)
+Buma end-to-end smoke test — run all phases at once or step by step.
 
 Prerequisites:
   docker compose up db -d        # Postgres must be running
   uv run alembic upgrade head    # Migrations must be applied
 
-Usage:
-  uv run python scripts/smoke.py
+─────────────────────────────────────────────────────────────
+Automated (all phases in one command):
+  uv run python scripts/smoke.py run
+
+Step-by-step (inspect each phase individually):
+  uv run python scripts/smoke.py seed
+
+  # In a separate terminal — keep it open:
+  uv run python scripts/smoke.py gateway
+
+  uv run python scripts/smoke.py webhook
+  export SMOKE_DELIVERY_ID=<value printed above>
+
+  uv run python scripts/smoke.py worker
+  uv run python scripts/smoke.py verify
+  uv run python scripts/smoke.py preview
+─────────────────────────────────────────────────────────────
 """
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import sys
 
 # scripts/ is on sys.path when running as `python scripts/smoke.py`
 # smoke/ is therefore importable as the `smoke` package.
-import redis.asyncio as aioredis
 from dotenv import load_dotenv
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 load_dotenv()
 
-# Buma imports must come after load_dotenv() so DATABASE_URL etc. are in the environment.
-from smoke.console import info, section  # noqa: E402
-from smoke.database import fetch_triage_results, seed_database  # noqa: E402
-from smoke.gateway import gateway_process  # noqa: E402
-from smoke.reporter import report_github_patch_preview, report_triage_outcome  # noqa: E402
-from smoke.webhook import build_webhook, send_webhook  # noqa: E402
-from smoke.worker import process_one_message  # noqa: E402
+# Imports must come after load_dotenv() so DATABASE_URL etc. are in the environment.
+from smoke.commands import (  # noqa: E402
+    cmd_gateway,
+    cmd_preview,
+    cmd_run,
+    cmd_seed,
+    cmd_verify,
+    cmd_webhook,
+    cmd_worker,
+)
 
-from buma.core.config import get_settings  # noqa: E402, tells the linter— suppress the warning on this line.
+_ASYNC_COMMANDS = {
+    "seed": cmd_seed,
+    "worker": cmd_worker,
+    "verify": cmd_verify,
+    "preview": cmd_preview,
+    "run": cmd_run,
+}
+
+_SYNC_COMMANDS = {
+    "gateway": cmd_gateway,
+    "webhook": cmd_webhook,
+}
 
 
-async def main() -> None:
-    settings = get_settings()
-    engine = create_async_engine(settings.database_url)
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)
-    print("\n" + "═" * 60)
-    print("  Buma Smoke Test — Phases 1–5")
-    print("═" * 60)
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="smoke",
+        description="Buma end-to-end smoke test.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "step-by-step usage:\n"
+            "  uv run python scripts/smoke.py seed\n"
+            "  uv run python scripts/smoke.py gateway      # separate terminal\n"
+            "  uv run python scripts/smoke.py webhook\n"
+            "  export SMOKE_DELIVERY_ID=<printed value>\n"
+            "  uv run python scripts/smoke.py worker\n"
+            "  uv run python scripts/smoke.py verify\n"
+            "  uv run python scripts/smoke.py preview\n"
+        ),
+    )
+    subparsers = parser.add_subparsers(dest="command", metavar="command")
+    subparsers.add_parser("seed", help="Step 1 — seed the database (RepoConfig + DeveloperProfile)")
+    subparsers.add_parser("gateway", help="Step 2 — start the gateway in the foreground (Ctrl+C to stop)")
+    subparsers.add_parser("webhook", help="Step 3 — send a signed webhook; prints the SMOKE_DELIVERY_ID export line")
+    subparsers.add_parser("worker", help="Step 4 — consume and process one message from the queue")
+    subparsers.add_parser("verify", help="Step 5 — query and display triage results (requires SMOKE_DELIVERY_ID)")
+    subparsers.add_parser("preview", help="Step 6 — show the GitHub patch preview (requires SMOKE_DELIVERY_ID)")
+    subparsers.add_parser("run", help="Run all phases end-to-end in one command")
 
-    try:
-        section(1, "Seeding database")
-        await seed_database(session_factory)
+    args = parser.parse_args()
 
-        section(2, "Starting gateway (uvicorn :8000)")
-        with gateway_process():
-            section(3, "Sending signed POST /webhook/github")
-            delivery_id, payload = build_webhook()
-            info(f"delivery_id = {delivery_id}")
-            response = send_webhook(delivery_id, payload, settings)
-            info(f"Gateway response: {response}")
-            info(f"Issue title: \"{payload['issue']['title']}\"")
+    if args.command is None:
+        parser.print_help()
+        sys.exit(0)
 
-            section(4, "Running worker (consume one message)")
-            await process_one_message(session_factory, redis_client)
-
-        section(5, "Verifying database records")
-        results = await fetch_triage_results(session_factory, delivery_id)
-        report_triage_outcome(results)
-
-        section(6, "GitHub patch preview (Phase 6 skipped — no App credentials)")
-        report_github_patch_preview(results.decision)
-
-        print("\n" + "═" * 60)
-        print("  SMOKE TEST PASSED ✓")
-        print("═" * 60 + "\n")
-
-    finally:
-        await redis_client.aclose()
-        await engine.dispose()
+    if args.command in _SYNC_COMMANDS:
+        _SYNC_COMMANDS[args.command]()
+    else:
+        sys.exit(asyncio.run(_ASYNC_COMMANDS[args.command]()))
 
 
 if __name__ == "__main__":
-    sys.exit(asyncio.run(main()))
+    main()

@@ -91,10 +91,26 @@ Local development and CI should run the same scripts (avoid duplicating logic in
 
 ### Running the smoke test
 
+Prerequisites:
 ```bash
-docker compose up db -d          # Postgres must be running
+docker compose up db -d          # Postgres and Redis must be running
 uv run alembic upgrade head      # Migrations must be applied
-uv run python scripts/smoke.py
+```
+
+Automated (all phases in one command):
+```bash
+uv run python scripts/smoke.py run
+```
+
+Step-by-step (inspect each phase individually):
+```bash
+uv run python scripts/smoke.py seed
+uv run python scripts/smoke.py gateway      # separate terminal — Ctrl+C to stop
+uv run python scripts/smoke.py webhook
+export SMOKE_DELIVERY_ID=<value printed above>
+uv run python scripts/smoke.py worker
+uv run python scripts/smoke.py verify
+uv run python scripts/smoke.py preview
 ```
 
 > Do not run as `./scripts/smoke.py` — the shebang does not resolve to the uv virtualenv.

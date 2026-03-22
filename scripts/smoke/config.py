@@ -23,3 +23,6 @@ GATEWAY_STARTUP_TIMEOUT = 15  # seconds
 
 # Absolute path to the repository root (scripts/smoke/config.py → up three levels)
 REPO_ROOT = Path(__file__).parent.parent.parent
+
+# Environment variable used to pass delivery_id between step-by-step CLI commands
+ENV_DELIVERY_ID = "SMOKE_DELIVERY_ID"
