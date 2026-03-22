@@ -23,7 +23,11 @@ class WebhookDeliveryRepository:
         repo_full_name: str,
         received_at: datetime,
     ) -> bool:
-        """Insert a delivery row. Returns True if inserted, False if delivery_id already exists."""
+        """Insert a delivery row. Returns True if inserted, False if delivery_id already exists.
+        Insert a delivery row. Returns True if inserted, False if delivery_id already exists.Insert a delivery row.
+        Returns True if inserted, False if delivery_id already exists.Insert a delivery row. Returns True if inserted,
+        False if delivery_id already exists.Insert a delivery row.
+        Returns True if inserted, False if delivery_id already exists."""
         self._session.add(
             WebhookDelivery(
                 delivery_id=delivery_id,

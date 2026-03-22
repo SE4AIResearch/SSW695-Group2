@@ -25,15 +25,15 @@ Optional (P1, only if it does not reduce P0 reliability): manual overrides, conf
 
 ## Repository status
 
-This repository currently contains foundational scaffolding:
+The P0 pipeline (Phases 1–5) is fully implemented and smoke-tested locally:
 
-- Python package skeleton (`src/buma/`) with a minimal health module
-- Unit tests (`tests/`)
+- Gateway (`src/buma/gateway/`) — webhook ingest, HMAC validation, Redis publish
+- Worker (`src/buma/worker/`) — queue consumer, triage engine, assignee selector, DB persistence, GitHub patch
+- Database (`src/buma/db/`) — all 6 ORM models, Alembic migration applied
+- Unit tests (`tests/`) + end-to-end smoke test (`scripts/smoke.py`)
 - Devcontainer for a consistent toolchain (`.devcontainer/`)
-- Script “contracts” for local checks (`scripts/`)
-- GitHub issue templates (`.github/ISSUE_TEMPLATE/`)
 
-Core runtime services (ingest API / worker / dashboard / database / queue) are in progress and will be added as the project implementation proceeds.
+Remaining P0 work: Dashboard (configuration, triage history, workload view).
 
 ## High-level architecture (target)
 
@@ -87,6 +87,33 @@ Local development and CI should run the same scripts (avoid duplicating logic in
 - `scripts/lint.sh`: `ruff` lint + `black --check`
 - `scripts/test.sh`: `pytest` + coverage gate
 - `scripts/codegen.sh`: OpenAPI model generation (skips if `openapi.yaml` is not present)
+- `scripts/smoke.py`: end-to-end local smoke test (Phases 1–5)
+
+### Running the smoke test
+
+Prerequisites:
+```bash
+docker compose up db -d          # Postgres and Redis must be running
+uv run alembic upgrade head      # Migrations must be applied
+```
+
+Automated (all phases in one command):
+```bash
+uv run python scripts/smoke.py run
+```
+
+Step-by-step (inspect each phase individually):
+```bash
+uv run python scripts/smoke.py seed
+uv run python scripts/smoke.py gateway      # separate terminal — Ctrl+C to stop
+uv run python scripts/smoke.py webhook
+export SMOKE_DELIVERY_ID=<value printed above>
+uv run python scripts/smoke.py worker
+uv run python scripts/smoke.py verify
+uv run python scripts/smoke.py preview
+```
+
+> Do not run as `./scripts/smoke.py` — the shebang does not resolve to the uv virtualenv.
 
 ## Repository layout
 
