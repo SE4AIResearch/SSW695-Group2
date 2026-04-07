@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
+from pydantic import ValidationError
+
 from buma.schemas.api.developer_profile import (
     DeveloperProfileCreate,
     DeveloperProfileResponse,
@@ -15,7 +17,6 @@ from buma.schemas.api.repo_config import (
 )
 from buma.schemas.api.triage import TriageDecisionResponse
 from buma.schemas.api.workload import DeveloperWorkload, WorkloadResponse
-from pydantic import ValidationError
 
 # ---------------------------------------------------------------------------
 # RepoConfigSettings
