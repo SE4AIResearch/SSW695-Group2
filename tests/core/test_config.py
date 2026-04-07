@@ -32,6 +32,32 @@ def test_settings_redis_url_override():
     assert s.redis_url == "redis://myredis:6379/2"
 
 
+def test_oauth_fields_default_to_none():
+    s = Settings(
+        database_url="postgresql+psycopg://test:test@localhost/test",
+        github_webhook_secret="secret",
+    )
+    assert s.github_oauth_client_id is None
+    assert s.github_oauth_client_secret is None
+
+
+def test_session_secret_has_dev_default():
+    s = Settings(
+        database_url="postgresql+psycopg://test:test@localhost/test",
+        github_webhook_secret="secret",
+    )
+    assert s.session_secret == "dev-secret-change-in-production"
+
+
+def test_session_secret_can_be_overridden():
+    s = Settings(
+        database_url="postgresql+psycopg://test:test@localhost/test",
+        github_webhook_secret="secret",
+        session_secret="my-real-secret",
+    )
+    assert s.session_secret == "my-real-secret"
+
+
 def test_get_settings_is_cached():
     with patch.dict(
         os.environ,

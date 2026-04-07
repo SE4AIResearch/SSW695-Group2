@@ -39,6 +39,7 @@ load_dotenv()
 
 # Imports must come after load_dotenv() so DATABASE_URL etc. are in the environment.
 from smoke.commands import (  # noqa: E402
+    cmd_api,
     cmd_gateway,
     cmd_preview,
     cmd_run,
@@ -59,6 +60,7 @@ _ASYNC_COMMANDS = {
 _SYNC_COMMANDS = {
     "gateway": cmd_gateway,
     "webhook": cmd_webhook,
+    "api": cmd_api,
 }
 
 
@@ -85,6 +87,7 @@ def main() -> None:
     subparsers.add_parser("worker", help="Step 4 — consume and process one message from the queue")
     subparsers.add_parser("verify", help="Step 5 — query and display triage results (requires SMOKE_DELIVERY_ID)")
     subparsers.add_parser("preview", help="Step 6 — show the GitHub patch preview (requires SMOKE_DELIVERY_ID)")
+    subparsers.add_parser("api", help="Smoke-test the config + observability API endpoints (gateway auto-started)")
     subparsers.add_parser("run", help="Run all phases end-to-end in one command")
 
     args = parser.parse_args()

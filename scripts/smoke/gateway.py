@@ -10,6 +10,7 @@ from __future__ import annotations
 import contextlib
 import os
 import subprocess
+import sys
 import time
 from collections.abc import Generator
 
@@ -33,8 +34,8 @@ def gateway_process() -> Generator[None, None, None]:
     """
     proc = subprocess.Popen(
         [
-            "uv",
-            "run",
+            sys.executable,
+            "-m",
             "uvicorn",
             "buma.gateway.app:app",
             "--port",
