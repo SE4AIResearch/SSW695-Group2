@@ -4,8 +4,10 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-# Must stay in sync with VALID_CATEGORIES in repo_config.py.
-VALID_SKILLS: frozenset[str] = frozenset({"bug", "feature", "question", "security", "docs"})
+from buma.schemas.api.repo_config import VALID_CATEGORIES
+
+# Skills are issue categories (DD-22). Import directly so the two sets cannot diverge.
+VALID_SKILLS: frozenset[str] = VALID_CATEGORIES
 
 
 class DeveloperProfileCreate(BaseModel):

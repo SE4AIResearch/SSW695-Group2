@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 
 import redis.asyncio as aioredis
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from buma.core.config import get_settings
+from smoke.api import run_api_smoke
 from smoke.config import ENV_DELIVERY_ID, GATEWAY_PORT, REPO_ROOT
 from smoke.console import fail, info, ok, section
 from smoke.database import fetch_triage_results, seed_database
@@ -62,8 +64,8 @@ def cmd_gateway() -> None:
     section(2, "Starting gateway (uvicorn :8000)  —  Ctrl+C to stop")
     subprocess.run(
         [
-            "uv",
-            "run",
+            sys.executable,
+            "-m",
             "uvicorn",
             "buma.gateway.app:app",
             "--port",
@@ -126,6 +128,28 @@ async def cmd_preview() -> None:
         report_github_patch_preview(results.decision)
     finally:
         await engine.dispose()
+
+
+# ---------------------------------------------------------------------------
+# API endpoints smoke command
+# ---------------------------------------------------------------------------
+
+
+def cmd_api() -> None:
+    """Start the gateway and smoke-test all config + observability API endpoints."""
+    print("\n" + "═" * 60)
+    print("  Buma API Smoke Test — Config & Observability Endpoints")
+    print("═" * 60)
+
+    section(1, "Starting gateway (uvicorn :8000)")
+    with gateway_process():
+        section(2, "Exercising config endpoints  (POST / GET / PATCH / DELETE)")
+        section(3, "Exercising observability endpoints  (triage + workload)")
+        run_api_smoke()
+
+    print("\n" + "═" * 60)
+    print("  API SMOKE TEST PASSED ✓")
+    print("═" * 60 + "\n")
 
 
 # ---------------------------------------------------------------------------
