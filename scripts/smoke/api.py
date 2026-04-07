@@ -180,8 +180,12 @@ def run_api_smoke(base_url: str = GATEWAY_URL) -> None:
     # ------------------------------------------------------------------
     info("Error cases")
 
-    r = client.get("/api/config/repos/999999999")
-    _assert(r.status_code == 404, "GET non-existent repo → 404 Not Found")
+    # Use repo_id + 1_000_000 as a guaranteed non-existent ID.
+    # This avoids collisions with seed fixtures (REPO_ID=123456789, OTHER_REPO_ID=999999999).
+    nonexistent_id = repo_id + 1_000_000
+
+    r = client.get(f"/api/config/repos/{nonexistent_id}")
+    _assert(r.status_code == 404, f"GET /api/config/repos/{nonexistent_id} (non-existent) → 404 Not Found")
 
     r = client.post(
         f"/api/config/repos/{repo_id}/developers",
@@ -195,10 +199,10 @@ def run_api_smoke(base_url: str = GATEWAY_URL) -> None:
     )
     _assert(r.status_code == 422, "PATCH repo with invalid category → 422 Unprocessable Entity")
 
-    r = client.get("/api/triage/999999999")
-    _assert(r.status_code == 404, "GET triage history for non-existent repo → 404 Not Found")
+    r = client.get(f"/api/triage/{nonexistent_id}")
+    _assert(r.status_code == 404, f"GET /api/triage/{nonexistent_id} (non-existent) → 404 Not Found")
 
-    r = client.get("/api/workload/999999999")
-    _assert(r.status_code == 404, "GET workload for non-existent repo → 404 Not Found")
+    r = client.get(f"/api/workload/{nonexistent_id}")
+    _assert(r.status_code == 404, f"GET /api/workload/{nonexistent_id} (non-existent) → 404 Not Found")
 
     info(f"Note: repo_id={repo_id} (api-smoke/test-repo) remains in the DB — safe to ignore")
