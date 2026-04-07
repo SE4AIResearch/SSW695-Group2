@@ -8,7 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from buma.core.config import Settings, get_settings
 from buma.gateway.publishers.queue import QueuePublisher
+from buma.gateway.repositories.developer_profile import DeveloperProfileRepository
+from buma.gateway.repositories.repo_config import RepoConfigRepository
 from buma.gateway.repositories.webhook_delivery import WebhookDeliveryRepository
+from buma.gateway.services.config import ConfigService
 from buma.gateway.services.ingest import IngestService
 
 
@@ -142,6 +145,16 @@ async def get_redis(
         yield client
     finally:
         await client.aclose()
+
+
+async def get_config_service(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> ConfigService:
+    return ConfigService(
+        session=db,
+        repo_config_repo=RepoConfigRepository(db),
+        developer_profile_repo=DeveloperProfileRepository(db),
+    )
 
 
 async def get_ingest_service(
