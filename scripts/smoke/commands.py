@@ -81,7 +81,7 @@ def cmd_webhook() -> None:
     section(3, "Sending signed POST /webhook/github")
     delivery_id, payload = build_webhook()
     send_webhook(delivery_id, payload, settings)
-    ok(f"Issue title: \"{payload['issue']['title']}\"")
+    ok(f'Issue title: "{payload["issue"]["title"]}"')
     print()
     print("  Copy and run the following before the next step:")
     print(f"  export {ENV_DELIVERY_ID}={delivery_id}")
@@ -153,7 +153,7 @@ async def cmd_run() -> None:
             delivery_id, payload = build_webhook()
             info(f"delivery_id = {delivery_id}")
             send_webhook(delivery_id, payload, settings)
-            ok(f"Issue title: \"{payload['issue']['title']}\"")
+            ok(f'Issue title: "{payload["issue"]["title"]}"')
 
             section(4, "Running worker (consume one message)")
             await process_one_message(session_factory, redis_client)
