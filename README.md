@@ -25,15 +25,16 @@ Optional (P1, only if it does not reduce P0 reliability): manual overrides, conf
 
 ## Repository status
 
-The P0 pipeline (Phases 1–5) is fully implemented and smoke-tested locally:
+The P0 pipeline is fully implemented and smoke-tested locally:
 
-- Gateway (`src/buma/gateway/`) — webhook ingest, HMAC validation, Redis publish
+- Gateway (`src/buma/gateway/`) — webhook ingest, HMAC validation, Redis publish; dashboard config + observability API endpoints
 - Worker (`src/buma/worker/`) — queue consumer, triage engine, assignee selector, DB persistence, GitHub patch
 - Database (`src/buma/db/`) — all 6 ORM models, Alembic migration applied
+- API schemas (`src/buma/schemas/api/`) — typed request/response schemas for all `/api/*` routes
 - Unit tests (`tests/`) + end-to-end smoke test (`scripts/smoke.py`)
 - Devcontainer for a consistent toolchain (`.devcontainer/`)
 
-Remaining P0 work: Dashboard (configuration, triage history, workload view).
+Remaining P0 work: GitHub OAuth 2.0 (dashboard login + session auth on API routes); public HTTPS endpoint; Dashboard UI (owned by UI team).
 
 ## High-level architecture (target)
 
@@ -80,6 +81,57 @@ uv sync --dev
 ./scripts/codegen.sh
 ```
 
+## Running the services
+
+Before starting any service, bring up the infrastructure and apply migrations:
+
+```bash
+docker compose up db -d          # PostgreSQL on :5432 and Redis on :6379
+uv run alembic upgrade head      # apply DB migrations
+```
+
+Copy `.env.example` to `.env` and fill in the required values:
+
+```bash
+cp .env.example .env
+# then edit .env — minimum required:
+# DATABASE_URL, REDIS_URL, GITHUB_WEBHOOK_SECRET
+```
+
+### Gateway (webhook ingest + dashboard API)
+
+```bash
+uv run uvicorn buma.gateway.app:app --reload --port 8000
+```
+
+Available routes:
+- `GET  /health` — liveness check
+- `POST /webhook/github` — GitHub webhook receiver
+- `POST|GET|PATCH /api/config/repos` — repo enrollment and config
+- `POST|PATCH|DELETE /api/config/repos/{id}/developers` — developer profile management
+- `GET  /api/triage/{repo_id}` — triage decision history
+- `GET  /api/workload/{repo_id}` — developer workload view
+
+### Worker (triage pipeline)
+
+In a second terminal:
+
+```bash
+uv run python -m buma.worker.runner
+```
+
+The worker connects to Redis, polls `buma:triage:queue`, and processes events through the full triage pipeline (classify → assign → persist → patch GitHub). It shuts down cleanly on `Ctrl+C` or `SIGTERM` — it finishes the current message before exiting.
+
+### Optional: GitHub App credentials (for Phase 6 — live GitHub patching)
+
+Without these, the worker runs Phases 1–5 only (`patch_state` stays `DECIDED`):
+
+```bash
+# in .env:
+GITHUB_APP_ID=<your app id>
+GITHUB_APP_PRIVATE_KEY=<PEM content with \n for newlines>
+```
+
 ## Scripts (the contract)
 
 Local development and CI should run the same scripts (avoid duplicating logic in workflow YAML).
@@ -111,6 +163,11 @@ export SMOKE_DELIVERY_ID=<value printed above>
 uv run python scripts/smoke.py worker
 uv run python scripts/smoke.py verify
 uv run python scripts/smoke.py preview
+```
+
+API endpoints smoke test (config + observability routes against a live gateway):
+```bash
+uv run python scripts/smoke.py api
 ```
 
 > Do not run as `./scripts/smoke.py` — the shebang does not resolve to the uv virtualenv.

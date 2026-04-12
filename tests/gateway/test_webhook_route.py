@@ -73,24 +73,24 @@ async def test_health_endpoint(client: AsyncClient):
     assert response.json()["status"] == "ok"
 
 
-async def test_missing_event_header_returns_400(client: AsyncClient):
+async def test_missing_event_header_returns_422(client: AsyncClient):
     body = _body()
     response = await client.post(
         "/webhook/github",
         content=body,
         headers={"X-GitHub-Delivery": "abc", "X-Hub-Signature-256": _sign(body)},
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
-async def test_missing_delivery_header_returns_400(client: AsyncClient):
+async def test_missing_delivery_header_returns_422(client: AsyncClient):
     body = _body()
     response = await client.post(
         "/webhook/github",
         content=body,
         headers={"X-GitHub-Event": "issues", "X-Hub-Signature-256": _sign(body)},
     )
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 async def test_invalid_signature_returns_401(client: AsyncClient):

@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     # Session cookie signing key. Override with a strong random value in production.
     session_secret: str = "dev-secret-change-in-production"
 
+    # Enable dev-only endpoints (e.g. POST /dev/sign-webhook).
+    # Never set to True in production.
+    debug: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:
