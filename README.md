@@ -122,6 +122,27 @@ uv run python -m buma.worker.runner
 
 The worker connects to Redis, polls `buma:triage:queue`, and processes events through the full triage pipeline (classify → assign → persist → patch GitHub). It shuts down cleanly on `Ctrl+C` or `SIGTERM` — it finishes the current message before exiting.
 
+### CORS (for the Dashboard UI)
+
+The gateway allows cross-origin requests from the origins listed in `CORS_ORIGINS` (comma-separated). The default covers local UI development:
+
+```bash
+# in .env:
+CORS_ORIGINS=http://localhost:5173
+```
+
+For production, set it to the deployed UI origin:
+
+```bash
+CORS_ORIGINS=https://buma.example.com
+```
+
+Multiple origins are supported:
+
+```bash
+CORS_ORIGINS=https://buma.example.com,http://localhost:5173
+```
+
 ### Optional: GitHub App credentials (for Phase 6 — live GitHub patching)
 
 Without these, the worker runs Phases 1–5 only (`patch_state` stays `DECIDED`):
