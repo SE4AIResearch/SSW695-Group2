@@ -8,6 +8,7 @@ import AuthCallback from './pages/AuthCallback';
 import Layout from './components/Layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Team from './pages/Team'; // ← Add this
+import RepositorySetup from './pages/RepositorySetup';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const theme = createTheme({
@@ -39,7 +40,8 @@ function App() {
           >
             <Route index element={<Navigate to="/dashboard" />} />
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="team" element={<Team />} /> {/* ← Change this */}
+            <Route path="team" element={<Team />} />
+            <Route path="setup" element={<RepositorySetup />} />
             <Route path="analytics" element={<div>Analytics - Coming Soon</div>} />
             <Route path="settings" element={<div>Settings - Coming Soon</div>} />
           </Route>
