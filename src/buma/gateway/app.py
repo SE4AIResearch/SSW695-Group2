@@ -13,7 +13,7 @@ from buma.gateway.routes.webhook import router as webhook_router
 def create_app() -> FastAPI:
     app = FastAPI(title="Buma Gateway", version="0.1.0")
 
-    cors_raw = os.environ.get("CORS_ORIGINS", "http://localhost:5173")
+    cors_raw = os.environ.get("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
     origins = [o.strip() for o in cors_raw.split(",") if o.strip()]
     app.add_middleware(
         CORSMiddleware,
