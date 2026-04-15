@@ -141,10 +141,13 @@ def cmd_api() -> None:
     print("  Buma API Smoke Test — Config & Observability Endpoints")
     print("═" * 60)
 
-    section(1, "Starting gateway (uvicorn :8000)")
-    with gateway_process():
-        section(2, "Exercising config endpoints  (POST / GET / PATCH / DELETE)")
-        section(3, "Exercising observability endpoints  (triage + workload)")
+    # DEBUG=true enables POST /dev/session so the smoke test can acquire a session
+    # cookie without going through the real GitHub OAuth round-trip.
+    section(1, "Starting gateway (uvicorn :8000, DEBUG=true)")
+    with gateway_process(extra_env={"DEBUG": "true"}):
+        section(2, "Acquiring dev session cookie  (POST /dev/session)")
+        section(3, "Exercising config endpoints  (POST / GET / PATCH / DELETE)")
+        section(4, "Exercising observability endpoints  (triage + workload)")
         run_api_smoke()
 
     print("\n" + "═" * 60)

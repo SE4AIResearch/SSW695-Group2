@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from buma.db.models import DeveloperProfile, RepoConfig, TriageDecision
-from buma.gateway.deps import get_db
+from buma.gateway.deps import get_db, require_session
 from buma.schemas.api.triage import TriageDecisionResponse, TriageHistoryResponse
 from buma.schemas.api.workload import DeveloperWorkload, WorkloadResponse
 
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/api", tags=["observability"])
 async def triage_history(
     repo_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
+    _session: Annotated[str, Depends(require_session)],
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ) -> TriageHistoryResponse:
@@ -51,6 +52,7 @@ async def triage_history(
 async def workload(
     repo_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> WorkloadResponse:
     # Verify repo exists
     repo = await db.execute(select(RepoConfig).where(RepoConfig.repo_id == repo_id))

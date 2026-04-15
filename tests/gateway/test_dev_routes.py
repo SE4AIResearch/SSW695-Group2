@@ -142,3 +142,45 @@ async def test_dev_sign_webhook_signature_changes_with_payload(debug_client):
     modified = {**SAMPLE_PAYLOAD, "action": "closed"}
     r2 = await debug_client.post("/dev/sign-webhook", json=modified)
     assert r1.json()["x_hub_signature_256"] != r2.json()["x_hub_signature_256"]
+
+
+# ------------------------------------------------------------------
+# POST /dev/session
+# ------------------------------------------------------------------
+
+
+async def test_dev_session_not_available_in_prod(prod_client):
+    response = await prod_client.post("/dev/session", json={"login": "smoke-user"})
+    assert response.status_code == 404
+
+
+async def test_dev_session_returns_200_in_debug(debug_client):
+    response = await debug_client.post("/dev/session", json={"login": "smoke-user"})
+    assert response.status_code == 200
+
+
+async def test_dev_session_returns_login(debug_client):
+    response = await debug_client.post("/dev/session", json={"login": "smoke-user"})
+    assert response.json()["login"] == "smoke-user"
+
+
+async def test_dev_session_sets_cookie(debug_client):
+    from buma.gateway.services.oauth import COOKIE_NAME
+
+    response = await debug_client.post("/dev/session", json={"login": "smoke-user"})
+    assert COOKIE_NAME in response.cookies
+
+
+async def test_dev_session_cookie_is_valid_jwt(debug_settings, debug_client):
+    from buma.gateway.services.oauth import COOKIE_NAME, OAuthService
+
+    response = await debug_client.post("/dev/session", json={"login": "smoke-user"})
+    cookie_value = response.cookies[COOKIE_NAME]
+    svc = OAuthService(debug_settings)
+    login = svc.get_session_user(cookie_value)
+    assert login == "smoke-user"
+
+
+async def test_dev_session_missing_login_returns_422(debug_client):
+    response = await debug_client.post("/dev/session", json={})
+    assert response.status_code == 422
