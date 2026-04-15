@@ -4,9 +4,10 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import Login from './pages/Login';
-import AuthCallback from './pages/AuthCallback'; // ← Add this import
+import AuthCallback from './pages/AuthCallback';
 import Layout from './components/Layout/Layout';
 import Dashboard from './pages/Dashboard';
+import Team from './pages/Team'; // ← Add this
 import ProtectedRoute from './components/ProtectedRoute';
 
 const theme = createTheme({
@@ -25,7 +26,7 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/auth/callback" element={<AuthCallback />} /> {/* ← Add this route */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* Protected routes */}
           <Route
@@ -38,9 +39,9 @@ function App() {
           >
             <Route index element={<Navigate to="/dashboard" />} />
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="team" element={<div>Team Page - Coming Soon</div>} />
-            <Route path="analytics" element={<div>Analytics Page - Coming Soon</div>} />
-            <Route path="settings" element={<div>Settings Page - Coming Soon</div>} />
+            <Route path="team" element={<Team />} /> {/* ← Change this */}
+            <Route path="analytics" element={<div>Analytics - Coming Soon</div>} />
+            <Route path="settings" element={<div>Settings - Coming Soon</div>} />
           </Route>
         </Routes>
       </BrowserRouter>

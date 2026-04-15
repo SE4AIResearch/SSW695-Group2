@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Grid, 
-  Paper, 
   Typography, 
   Box, 
   Card,
@@ -18,13 +17,13 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { 
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -32,25 +31,16 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell,
-  Legend
+  Cell
 } from 'recharts';
 import SearchIcon from '@mui/icons-material/Search';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SpeedIcon from '@mui/icons-material/Speed';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { observabilityApi } from '../services/api';
 
-// Sample data for bug trends
-const bugTrendData = [
-  { date: '2025-01-02', bugs: 12 },
-  { date: '2025-01-03', bugs: 18 },
-  { date: '2025-01-04', bugs: 15 },
-  { date: '2025-01-05', bugs: 22 },
-  { date: '2025-01-06', bugs: 19 },
-  { date: '2025-01-07', bugs: 25 },
-  { date: '2025-01-08', bugs: 20 },
-];
+const REPO_ID = 1;
 
 // Sample data for category breakdown
 const categoryData = [
@@ -60,14 +50,6 @@ const categoryData = [
   { name: 'API', value: 10, color: '#F59E0B' },
 ];
 
-// Sample data for recent activity
-const recentActivity = [
-  { id: '#234', title: 'Login page crashes on Safari', assignee: 'sarah_dev', category: 'Frontend', priority: 'High', time: '2 mins ago' },
-  { id: '#233', title: 'API timeout on user endpoint', assignee: 'john_backend', category: 'Backend', priority: 'Critical', time: '5 mins ago' },
-  { id: '#232', title: 'UI button alignment issue', assignee: 'emma_dev', category: 'Frontend', priority: 'Low', time: '10 mins ago' },
-  { id: '#231', title: 'Database query slow performance', assignee: 'john_backend', category: 'Database', priority: 'Medium', time: '15 mins ago' },
-];
-
 // Priority colors
 const getPriorityColor = (priority) => {
   switch (priority) {
@@ -75,6 +57,10 @@ const getPriorityColor = (priority) => {
     case 'High': return '#F97316';
     case 'Medium': return '#F59E0B';
     case 'Low': return '#10B981';
+    case 'P0': return '#EF4444';
+    case 'P1': return '#F97316';
+    case 'P2': return '#F59E0B';
+    case 'P3': return '#10B981';
     default: return '#6B7280';
   }
 };
@@ -82,15 +68,90 @@ const getPriorityColor = (priority) => {
 export default function Dashboard() {
   const [timePeriod, setTimePeriod] = useState('Last 7 Days');
   const [searchQuery, setSearchQuery] = useState('');
+  const [triageHistory, setTriageHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await observabilityApi.getTriageHistory(REPO_ID, { 
+        limit: 100,
+        offset: 0 
+      });
+      setTriageHistory(response.data.decisions || []);
+      console.log('Loaded data:', response.data);
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to load data. Using demo data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Sample data for bug trends
+  const bugTrendData = [
+    { date: '01/02', bugs: 12 },
+    { date: '01/03', bugs: 18 },
+    { date: '01/04', bugs: 15 },
+    { date: '01/05', bugs: 22 },
+    { date: '01/06', bugs: 19 },
+    { date: '01/07', bugs: 25 },
+    { date: '01/08', bugs: 20 },
+  ];
+
+  // Sample data for recent activity
+  const recentActivity = triageHistory.length > 0 
+    ? triageHistory.slice(0, 4).map(item => ({
+        id: `#${item.issue_number}`,
+        title: `Issue ${item.issue_number}`,
+        assignee: item.selected_assignee_login || 'Unassigned',
+        category: item.predicted_category || 'Unknown',
+        priority: item.predicted_priority || 'Medium',
+        time: new Date(item.decided_at).toLocaleString()
+      }))
+    : [
+        { id: '#234', title: 'Login page crashes on Safari', assignee: 'sarah_dev', category: 'Frontend', priority: 'High', time: '2 mins ago' },
+        { id: '#233', title: 'API timeout on user endpoint', assignee: 'john_backend', category: 'Backend', priority: 'Critical', time: '5 mins ago' },
+        { id: '#232', title: 'UI button alignment issue', assignee: 'emma_dev', category: 'Frontend', priority: 'Low', time: '10 mins ago' },
+        { id: '#231', title: 'Database query slow performance', assignee: 'john_backend', category: 'Database', priority: 'Medium', time: '15 mins ago' },
+      ];
+
+  const stats = {
+    totalBugs: triageHistory.length || 145,
+    autoTriaged: triageHistory.filter(d => d.predicted_category).length || 132,
+    accuracy: triageHistory.length > 0 
+      ? Math.round((triageHistory.filter(d => d.predicted_category).length / triageHistory.length) * 100)
+      : 87,
+    avgTimeSaved: 8
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Page Title - Bigger */}
       <Typography variant="h3" gutterBottom fontWeight="600" sx={{ mb: 3 }}>
         Dashboard
       </Typography>
 
-      {/* Search Bar - Bigger */}
+      {error && (
+        <Alert severity="warning" sx={{ mb: 3 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Search Bar */}
       <Box sx={{ mb: 4, display: 'flex', gap: 2 }}>
         <TextField
           fullWidth
@@ -117,6 +178,7 @@ export default function Dashboard() {
         <Button 
           variant="contained" 
           size="large"
+          onClick={fetchData}
           sx={{ 
             px: 5,
             py: 1.5,
@@ -129,11 +191,11 @@ export default function Dashboard() {
             }
           }}
         >
-          SEARCH
+          REFRESH
         </Button>
       </Box>
 
-      {/* Stats Cards - Bigger */}
+      {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ height: '100%' }}>
@@ -144,7 +206,7 @@ export default function Dashboard() {
                     Total Bugs
                   </Typography>
                   <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                    145
+                    {stats.totalBugs}
                   </Typography>
                   <Typography variant="body2" color="success.main" sx={{ fontSize: '0.875rem' }}>
                     +12% from last week
@@ -174,7 +236,7 @@ export default function Dashboard() {
                     Auto-Triaged
                   </Typography>
                   <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                    132
+                    {stats.autoTriaged}
                   </Typography>
                   <Typography variant="body2" color="success.main" sx={{ fontSize: '0.875rem' }}>
                     91% success rate
@@ -204,7 +266,7 @@ export default function Dashboard() {
                     Accuracy
                   </Typography>
                   <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                    87%
+                    {stats.accuracy}%
                   </Typography>
                   <Typography variant="body2" color="success.main" sx={{ fontSize: '0.875rem' }}>
                     +3% improvement
@@ -234,7 +296,7 @@ export default function Dashboard() {
                     Avg Time Saved
                   </Typography>
                   <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                    8 min
+                    {stats.avgTimeSaved} min
                   </Typography>
                   <Typography variant="body2" color="success.main" sx={{ fontSize: '0.875rem' }}>
                     Per bug triaged
@@ -257,7 +319,7 @@ export default function Dashboard() {
       </Grid>
 
       <Grid container spacing={3}>
-        {/* Bug Trends Chart - Bigger */}
+        {/* Bug Trends Chart */}
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent sx={{ p: 3 }}>
@@ -278,7 +340,6 @@ export default function Dashboard() {
                 </FormControl>
               </Box>
 
-              {/* Area Chart - Bigger */}
               <ResponsiveContainer width="100%" height={350}>
                 <AreaChart data={bugTrendData}>
                   <defs>
@@ -288,15 +349,9 @@ export default function Dashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 13 }}
-                    tickFormatter={(value) => value.slice(5)}
-                  />
+                  <XAxis dataKey="date" tick={{ fontSize: 13 }} />
                   <YAxis tick={{ fontSize: 13 }} />
-                  <Tooltip 
-                    contentStyle={{ fontSize: '14px' }}
-                  />
+                  <Tooltip contentStyle={{ fontSize: '14px' }} />
                   <Area 
                     type="monotone" 
                     dataKey="bugs" 
@@ -310,7 +365,7 @@ export default function Dashboard() {
 
               <Box sx={{ textAlign: 'center', mt: 3 }}>
                 <Typography variant="h2" fontWeight="bold" sx={{ color: '#7C3AED' }}>
-                  131
+                  {stats.autoTriaged}
                 </Typography>
                 <Typography variant="h6" color="text.secondary" sx={{ mt: 1 }}>
                   Bugs Triaged This Week
@@ -320,7 +375,7 @@ export default function Dashboard() {
           </Card>
         </Grid>
 
-        {/* Category Breakdown - Bigger */}
+        {/* Category Breakdown */}
         <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%' }}>
             <CardContent sx={{ p: 3 }}>
@@ -381,7 +436,7 @@ export default function Dashboard() {
           </Card>
         </Grid>
 
-        {/* Recent Activity - Bigger */}
+        {/* Recent Activity */}
         <Grid item xs={12}>
           <Card>
             <CardContent sx={{ p: 3 }}>
