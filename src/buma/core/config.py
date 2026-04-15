@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     github_oauth_client_secret: str | None = None
 
     # Session cookie signing key. Override with a strong random value in production.
-    session_secret: str = "dev-secret-change-in-production"
+    session_secret: str = "dev-secret-change-in-production!"
 
     # Comma-separated allowed CORS origins, e.g. "https://buma.example.com,http://localhost:5173"
     cors_origins: str = "http://localhost:5173"

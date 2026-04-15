@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from buma.gateway.deps import get_config_service
+from buma.gateway.deps import get_config_service, require_session
 from buma.gateway.services.config import (
     ConfigService,
     DeveloperAlreadyExistsError,
@@ -21,6 +21,7 @@ router = APIRouter(prefix="/api/config", tags=["config"])
 async def enroll_repo(
     body: RepoConfigCreate,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> RepoConfigResponse:
     return await svc.enroll_repo(body)
 
@@ -29,6 +30,7 @@ async def enroll_repo(
 async def get_repo(
     repo_id: int,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> RepoConfigResponse:
     try:
         return await svc.get_repo(repo_id)
@@ -41,6 +43,7 @@ async def update_repo_config(
     repo_id: int,
     body: RepoConfigUpdate,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> RepoConfigResponse:
     try:
         return await svc.update_repo_config(repo_id, body)
@@ -57,6 +60,7 @@ async def add_developer(
     repo_id: int,
     body: DeveloperProfileCreate,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> DeveloperProfileResponse:
     try:
         return await svc.add_developer(repo_id, body)
@@ -72,6 +76,7 @@ async def update_developer(
     github_login: str,
     body: DeveloperProfileUpdate,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> DeveloperProfileResponse:
     try:
         return await svc.update_developer(repo_id, github_login, body)
@@ -87,6 +92,7 @@ async def remove_developer(
     repo_id: int,
     github_login: str,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> None:
     try:
         await svc.remove_developer(repo_id, github_login)

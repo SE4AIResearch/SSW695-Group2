@@ -8,7 +8,7 @@ from httpx import ASGITransport, AsyncClient
 
 from buma.core.config import Settings, get_settings
 from buma.gateway.app import create_app
-from buma.gateway.deps import get_config_service
+from buma.gateway.deps import get_config_service, require_session
 from buma.gateway.services.config import (
     ConfigService,
     DeveloperAlreadyExistsError,
@@ -66,8 +66,29 @@ async def client(test_settings, mock_svc):
     app = create_app()
     app.dependency_overrides[get_settings] = lambda: test_settings
     app.dependency_overrides[get_config_service] = lambda: mock_svc
+    app.dependency_overrides[require_session] = lambda: "test-user"
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
+
+
+# ------------------------------------------------------------------
+# Auth enforcement
+# ------------------------------------------------------------------
+
+
+@pytest.fixture
+async def unauthed_client(test_settings, mock_svc):
+    """Client with no session — require_session is NOT overridden."""
+    app = create_app()
+    app.dependency_overrides[get_settings] = lambda: test_settings
+    app.dependency_overrides[get_config_service] = lambda: mock_svc
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        yield c
+
+
+async def test_unauthenticated_request_returns_401(unauthed_client):
+    response = await unauthed_client.get("/api/config/repos/42")
+    assert response.status_code == 401
 
 
 # ------------------------------------------------------------------

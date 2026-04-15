@@ -46,7 +46,7 @@ def test_session_secret_has_dev_default():
         database_url="postgresql+psycopg://test:test@localhost/test",
         github_webhook_secret="secret",
     )
-    assert s.session_secret == "dev-secret-change-in-production"
+    assert s.session_secret == "dev-secret-change-in-production!"
 
 
 def test_session_secret_can_be_overridden():
