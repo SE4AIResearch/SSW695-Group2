@@ -8,7 +8,7 @@ from httpx import ASGITransport, AsyncClient
 
 from buma.core.config import Settings, get_settings
 from buma.gateway.app import create_app
-from buma.gateway.deps import get_db
+from buma.gateway.deps import get_db, require_session
 
 
 def _make_triage_orm(event_id="evt-1", issue_number=1, category="bug", priority="P1"):
@@ -81,7 +81,34 @@ async def _make_client(test_settings, db_session):
     app = create_app()
     app.dependency_overrides[get_settings] = lambda: test_settings
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[require_session] = lambda: "test-user"
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
+
+
+# ------------------------------------------------------------------
+# Auth enforcement
+# ------------------------------------------------------------------
+
+
+async def test_triage_unauthenticated_returns_401(test_settings):
+    """require_session NOT overridden — no cookie → 401."""
+    db = _make_db_session(repo_exists=True, triage_rows=[], total=0)
+    app = create_app()
+    app.dependency_overrides[get_settings] = lambda: test_settings
+    app.dependency_overrides[get_db] = lambda: db
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/api/triage/42")
+    assert response.status_code == 401
+
+
+async def test_workload_unauthenticated_returns_401(test_settings):
+    db = _make_workload_db(repo_exists=True, dev_rows=[])
+    app = create_app()
+    app.dependency_overrides[get_settings] = lambda: test_settings
+    app.dependency_overrides[get_db] = lambda: db
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/api/workload/42")
+    assert response.status_code == 401
 
 
 # ------------------------------------------------------------------

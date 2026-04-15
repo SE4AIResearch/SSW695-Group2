@@ -73,3 +73,10 @@ class RepoConfigResponse(BaseModel):
     config: RepoConfigSettings
     created_at: datetime
     updated_at: datetime
+
+
+class RepoConfigListResponse(BaseModel):
+    repos: list[RepoConfigResponse]
+    total: int
+    limit: int
+    offset: int

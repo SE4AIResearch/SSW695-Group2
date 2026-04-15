@@ -1,9 +1,9 @@
 """
 API endpoint smoke test — exercises all config and observability routes.
 
-Note: auth (Phase 5) is not yet implemented, so these endpoints are
-currently unprotected. A future smoke step will add session headers
-once OAuth is in place.
+Session auth (Phase 5): the gateway must be started with DEBUG=true so that
+POST /dev/session is available. The smoke test acquires a JWT session cookie
+from that endpoint and attaches it to all subsequent /api/* calls.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ from smoke.console import fail, info, ok
 API_SMOKE_REPO_FULL_NAME = "api-smoke/test-repo"
 API_SMOKE_INSTALLATION_ID = 77001
 API_SMOKE_DEVELOPER = "carlos"
+API_SMOKE_LOGIN = "smoke-test-user"
 
 
 def _assert(condition: bool, label: str, detail: str = "") -> None:
@@ -31,8 +32,21 @@ def run_api_smoke(base_url: str = GATEWAY_URL) -> None:
     """
     Execute the full API smoke sequence against a running gateway.
     Raises SystemExit(1) on the first failure via fail().
+    Requires the gateway to have been started with DEBUG=true.
     """
-    client = httpx.Client(base_url=base_url, timeout=10.0)
+    bootstrap = httpx.Client(base_url=base_url, timeout=10.0)
+
+    # ------------------------------------------------------------------
+    # 0. Acquire a dev session cookie
+    # ------------------------------------------------------------------
+    info(f"POST /dev/session  →  login as '{API_SMOKE_LOGIN}'")
+    r = bootstrap.post("/dev/session", json={"login": API_SMOKE_LOGIN})
+    _assert(r.status_code == 200, "POST /dev/session → 200 OK", str(r.text))
+    session_cookie = r.cookies.get("buma_session")
+    _assert(session_cookie is not None, "  buma_session cookie present in response")
+
+    # All subsequent calls carry the session cookie.
+    client = httpx.Client(base_url=base_url, timeout=10.0, cookies={"buma_session": session_cookie})
 
     # ------------------------------------------------------------------
     # 1. Enroll a repo

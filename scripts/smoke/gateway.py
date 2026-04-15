@@ -21,10 +21,14 @@ from smoke.console import fail, ok
 
 
 @contextlib.contextmanager
-def gateway_process() -> Generator[None, None, None]:
+def gateway_process(extra_env: dict | None = None) -> Generator[None, None, None]:
     """
     Start the gateway as a background process and yield once it is healthy.
     Terminates the process on exit regardless of success or failure.
+
+    Args:
+        extra_env: Additional environment variables to pass to the gateway process.
+                   Use {"DEBUG": "true"} to enable dev-only endpoints (e.g. /dev/session).
 
     Usage:
         with gateway_process():
@@ -44,7 +48,7 @@ def gateway_process() -> Generator[None, None, None]:
             "warning",
         ],
         cwd=str(REPO_ROOT),
-        env={**os.environ, "PYTHONUNBUFFERED": "1"},
+        env={**os.environ, "PYTHONUNBUFFERED": "1", **(extra_env or {})},
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from buma.gateway.deps import get_config_service
+from buma.gateway.deps import get_config_service, require_session
 from buma.gateway.services.config import (
     ConfigService,
     DeveloperAlreadyExistsError,
@@ -12,15 +12,26 @@ from buma.gateway.services.config import (
     RepoNotFoundError,
 )
 from buma.schemas.api.developer_profile import DeveloperProfileCreate, DeveloperProfileResponse, DeveloperProfileUpdate
-from buma.schemas.api.repo_config import RepoConfigCreate, RepoConfigResponse, RepoConfigUpdate
+from buma.schemas.api.repo_config import RepoConfigCreate, RepoConfigListResponse, RepoConfigResponse, RepoConfigUpdate
 
 router = APIRouter(prefix="/api/config", tags=["config"])
+
+
+@router.get("/repos", response_model=RepoConfigListResponse)
+async def list_repos(
+    svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> RepoConfigListResponse:
+    return await svc.list_repos(limit=limit, offset=offset)
 
 
 @router.post("/repos", response_model=RepoConfigResponse, status_code=status.HTTP_201_CREATED)
 async def enroll_repo(
     body: RepoConfigCreate,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> RepoConfigResponse:
     return await svc.enroll_repo(body)
 
@@ -29,6 +40,7 @@ async def enroll_repo(
 async def get_repo(
     repo_id: int,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> RepoConfigResponse:
     try:
         return await svc.get_repo(repo_id)
@@ -41,6 +53,7 @@ async def update_repo_config(
     repo_id: int,
     body: RepoConfigUpdate,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> RepoConfigResponse:
     try:
         return await svc.update_repo_config(repo_id, body)
@@ -57,6 +70,7 @@ async def add_developer(
     repo_id: int,
     body: DeveloperProfileCreate,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> DeveloperProfileResponse:
     try:
         return await svc.add_developer(repo_id, body)
@@ -72,6 +86,7 @@ async def update_developer(
     github_login: str,
     body: DeveloperProfileUpdate,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> DeveloperProfileResponse:
     try:
         return await svc.update_developer(repo_id, github_login, body)
@@ -87,6 +102,7 @@ async def remove_developer(
     repo_id: int,
     github_login: str,
     svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
 ) -> None:
     try:
         await svc.remove_developer(repo_id, github_login)

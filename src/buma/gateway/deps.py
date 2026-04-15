@@ -3,7 +3,7 @@ from functools import lru_cache
 from typing import Annotated
 
 import redis.asyncio as aioredis
-from fastapi import Depends
+from fastapi import Cookie, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from buma.core.config import Settings, get_settings
@@ -13,6 +13,7 @@ from buma.gateway.repositories.repo_config import RepoConfigRepository
 from buma.gateway.repositories.webhook_delivery import WebhookDeliveryRepository
 from buma.gateway.services.config import ConfigService
 from buma.gateway.services.ingest import IngestService
+from buma.gateway.services.oauth import COOKIE_NAME, OAuthService
 
 
 @lru_cache
@@ -155,6 +156,20 @@ async def get_config_service(
         repo_config_repo=RepoConfigRepository(db),
         developer_profile_repo=DeveloperProfileRepository(db),
     )
+
+
+async def require_session(
+    settings: Annotated[Settings, Depends(get_settings)],
+    buma_session: Annotated[str | None, Cookie(alias=COOKIE_NAME)] = None,
+) -> str:
+    """Dependency that enforces a valid JWT session. Returns the GitHub login."""
+    if buma_session is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
+    svc = OAuthService(settings)
+    login = svc.get_session_user(buma_session)
+    if login is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired or invalid.")
+    return login
 
 
 async def get_ingest_service(

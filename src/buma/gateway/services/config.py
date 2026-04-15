@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from buma.gateway.repositories.developer_profile import DeveloperProfileRepository
 from buma.gateway.repositories.repo_config import RepoConfigRepository
 from buma.schemas.api.developer_profile import DeveloperProfileCreate, DeveloperProfileResponse, DeveloperProfileUpdate
-from buma.schemas.api.repo_config import RepoConfigCreate, RepoConfigResponse, RepoConfigUpdate
+from buma.schemas.api.repo_config import RepoConfigCreate, RepoConfigListResponse, RepoConfigResponse, RepoConfigUpdate
 
 
 class RepoNotFoundError(Exception):
@@ -44,6 +44,15 @@ class ConfigService:
         )
         await self._session.commit()
         return RepoConfigResponse.model_validate(record, from_attributes=True)
+
+    async def list_repos(self, limit: int, offset: int) -> RepoConfigListResponse:
+        records, total = await self._repo_config_repo.list_all(limit=limit, offset=offset)
+        return RepoConfigListResponse(
+            repos=[RepoConfigResponse.model_validate(r, from_attributes=True) for r in records],
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
 
     async def get_repo(self, repo_id: int) -> RepoConfigResponse:
         record = await self._repo_config_repo.get_by_id(repo_id)
