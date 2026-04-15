@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from buma.db.models import RepoConfig
@@ -25,6 +25,14 @@ class RepoConfigRepository:
     async def get_by_id(self, repo_id: int) -> RepoConfig | None:
         result = await self._session.execute(select(RepoConfig).where(RepoConfig.repo_id == repo_id))
         return result.scalar_one_or_none()
+
+    async def list_all(self, limit: int, offset: int) -> tuple[list[RepoConfig], int]:
+        total_result = await self._session.execute(select(func.count()).select_from(RepoConfig))
+        total = total_result.scalar_one()
+        rows_result = await self._session.execute(
+            select(RepoConfig).order_by(RepoConfig.repo_id).limit(limit).offset(offset)
+        )
+        return list(rows_result.scalars().all()), total
 
     async def update_config(self, repo_id: int, config: dict) -> RepoConfig | None:
         record = await self.get_by_id(repo_id)
