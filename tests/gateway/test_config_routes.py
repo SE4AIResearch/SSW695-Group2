@@ -16,7 +16,7 @@ from buma.gateway.services.config import (
     RepoNotFoundError,
 )
 from buma.schemas.api.developer_profile import DeveloperProfileResponse
-from buma.schemas.api.repo_config import RepoConfigResponse, RepoConfigSettings
+from buma.schemas.api.repo_config import RepoConfigListResponse, RepoConfigResponse, RepoConfigSettings
 
 NOW = datetime(2024, 1, 1, tzinfo=UTC)
 
@@ -41,9 +41,13 @@ DEV_RESPONSE = DeveloperProfileResponse(
 )
 
 
+LIST_RESPONSE = RepoConfigListResponse(repos=[REPO_RESPONSE], total=1, limit=100, offset=0)
+
+
 @pytest.fixture
 def mock_svc():
     svc = AsyncMock(spec=ConfigService)
+    svc.list_repos = AsyncMock(return_value=LIST_RESPONSE)
     svc.enroll_repo = AsyncMock(return_value=REPO_RESPONSE)
     svc.get_repo = AsyncMock(return_value=REPO_RESPONSE)
     svc.update_repo_config = AsyncMock(return_value=REPO_RESPONSE)
@@ -89,6 +93,57 @@ async def unauthed_client(test_settings, mock_svc):
 async def test_unauthenticated_request_returns_401(unauthed_client):
     response = await unauthed_client.get("/api/config/repos/42")
     assert response.status_code == 401
+
+
+# ------------------------------------------------------------------
+# GET /api/config/repos
+# ------------------------------------------------------------------
+
+
+async def test_list_repos_returns_200(client):
+    response = await client.get("/api/config/repos")
+    assert response.status_code == 200
+
+
+async def test_list_repos_response_shape(client):
+    response = await client.get("/api/config/repos")
+    data = response.json()
+    assert "repos" in data
+    assert "total" in data
+    assert "limit" in data
+    assert "offset" in data
+
+
+async def test_list_repos_default_pagination(client):
+    response = await client.get("/api/config/repos")
+    data = response.json()
+    assert data["limit"] == 100
+    assert data["offset"] == 0
+
+
+async def test_list_repos_custom_pagination(client, mock_svc):
+    mock_svc.list_repos.return_value = RepoConfigListResponse(repos=[], total=0, limit=10, offset=20)
+    response = await client.get("/api/config/repos?limit=10&offset=20")
+    data = response.json()
+    assert data["limit"] == 10
+    assert data["offset"] == 20
+
+
+async def test_list_repos_contains_repo(client):
+    response = await client.get("/api/config/repos")
+    data = response.json()
+    assert len(data["repos"]) == 1
+    assert data["repos"][0]["repo_full_name"] == "org/repo"
+
+
+async def test_list_repos_invalid_limit_returns_422(client):
+    response = await client.get("/api/config/repos?limit=0")
+    assert response.status_code == 422
+
+
+async def test_list_repos_limit_exceeds_max_returns_422(client):
+    response = await client.get("/api/config/repos?limit=501")
+    assert response.status_code == 422
 
 
 # ------------------------------------------------------------------

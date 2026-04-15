@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from buma.gateway.deps import get_config_service, require_session
 from buma.gateway.services.config import (
@@ -12,9 +12,19 @@ from buma.gateway.services.config import (
     RepoNotFoundError,
 )
 from buma.schemas.api.developer_profile import DeveloperProfileCreate, DeveloperProfileResponse, DeveloperProfileUpdate
-from buma.schemas.api.repo_config import RepoConfigCreate, RepoConfigResponse, RepoConfigUpdate
+from buma.schemas.api.repo_config import RepoConfigCreate, RepoConfigListResponse, RepoConfigResponse, RepoConfigUpdate
 
 router = APIRouter(prefix="/api/config", tags=["config"])
+
+
+@router.get("/repos", response_model=RepoConfigListResponse)
+async def list_repos(
+    svc: Annotated[ConfigService, Depends(get_config_service)],
+    _session: Annotated[str, Depends(require_session)],
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
+) -> RepoConfigListResponse:
+    return await svc.list_repos(limit=limit, offset=offset)
 
 
 @router.post("/repos", response_model=RepoConfigResponse, status_code=status.HTTP_201_CREATED)
