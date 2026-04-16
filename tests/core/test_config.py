@@ -33,10 +33,16 @@ def test_settings_redis_url_override():
 
 
 def test_oauth_fields_default_to_none():
-    s = Settings(
-        database_url="postgresql+psycopg://test:test@localhost/test",
-        github_webhook_secret="secret",
-    )
+    # Use patch.dict to remove OAuth vars from the environment for this test,
+    # and _env_file=None to skip reading .env — local .env may have these set.
+    with patch.dict(os.environ, {}, clear=False):
+        os.environ.pop("GITHUB_OAUTH_CLIENT_ID", None)
+        os.environ.pop("GITHUB_OAUTH_CLIENT_SECRET", None)
+        s = Settings(
+            _env_file=None,
+            database_url="postgresql+psycopg://test:test@localhost/test",
+            github_webhook_secret="secret",
+        )
     assert s.github_oauth_client_id is None
     assert s.github_oauth_client_secret is None
 
