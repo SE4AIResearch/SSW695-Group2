@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     # Session cookie signing key. Override with a strong random value in production.
     session_secret: str = "dev-secret-change-in-production!"
 
-    # Comma-separated allowed CORS origins, e.g. "https://buma.example.com,http://localhost:5173"
-    cors_origins: str = "http://localhost:5173"
+    # Comma-separated allowed CORS origins, e.g. "https://buma.example.com,http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
     # Enable dev-only endpoints (e.g. POST /dev/sign-webhook).
     # Never set to True in production.

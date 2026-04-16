@@ -1,9 +1,9 @@
-import os
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from buma.core.config import get_settings
 from buma.gateway.health import status as health_status
+from buma.gateway.routes.api_auth import router as api_auth_router
 from buma.gateway.routes.auth import router as auth_router
 from buma.gateway.routes.config import router as config_router
 from buma.gateway.routes.dev import router as dev_router
@@ -14,8 +14,8 @@ from buma.gateway.routes.webhook import router as webhook_router
 def create_app() -> FastAPI:
     app = FastAPI(title="Buma Gateway", version="0.1.0")
 
-    cors_raw = os.environ.get("CORS_ORIGINS", "http://localhost:5173")
-    origins = [o.strip() for o in cors_raw.split(",") if o.strip()]
+    settings = get_settings()
+    origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
@@ -28,6 +28,7 @@ def create_app() -> FastAPI:
     async def health() -> dict:
         return health_status()
 
+    app.include_router(api_auth_router)
     app.include_router(auth_router)
     app.include_router(webhook_router)
     app.include_router(config_router)

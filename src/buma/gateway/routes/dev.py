@@ -71,13 +71,13 @@ async def dev_session(
     if not settings.debug:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     svc = OAuthService(settings)
-    cookie_value = svc.create_session(body.login)
+    token = svc.create_session(body.login)
     response.set_cookie(
         key=COOKIE_NAME,
-        value=cookie_value,
+        value=token,
         httponly=True,
         samesite="lax",
         secure=False,
         max_age=SESSION_TTL_HOURS * 3600,
     )
-    return {"login": body.login}
+    return {"login": body.login, "token": token}
