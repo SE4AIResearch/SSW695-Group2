@@ -42,11 +42,15 @@ def run_api_smoke(base_url: str = GATEWAY_URL) -> None:
     info(f"POST /dev/session  →  login as '{API_SMOKE_LOGIN}'")
     r = bootstrap.post("/dev/session", json={"login": API_SMOKE_LOGIN})
     _assert(r.status_code == 200, "POST /dev/session → 200 OK", str(r.text))
-    session_cookie = r.cookies.get("buma_session")
-    _assert(session_cookie is not None, "  buma_session cookie present in response")
+    token = r.json().get("token")
+    _assert(token is not None, "  token present in response body")
 
-    # All subsequent calls carry the session cookie.
-    client = httpx.Client(base_url=base_url, timeout=10.0, cookies={"buma_session": session_cookie})
+    # All subsequent calls carry the JWT as a Bearer token.
+    client = httpx.Client(
+        base_url=base_url,
+        timeout=10.0,
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     # ------------------------------------------------------------------
     # 1. Enroll a repo
