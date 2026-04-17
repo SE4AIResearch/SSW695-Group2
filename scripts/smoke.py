@@ -29,6 +29,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+
+import sys
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 import sys
 
 # scripts/ is on sys.path when running as `python scripts/smoke.py`
