@@ -16,14 +16,16 @@ import {
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import PeopleIcon from '@mui/icons-material/People';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { authService } from '../../services/auth';
 
-const drawerWidth = 260; // Increased from 200 to 260
+const drawerWidth = 260;
 
 const menuItems = [
   { text: 'Home', icon: <HomeIcon />, path: '/dashboard' },
   { text: 'People', icon: <PeopleIcon />, path: '/team' },
+  { text: 'Setup', icon: <SettingsIcon />, path: '/setup' }, // Added
 ];
 
 export default function Layout() {
@@ -106,7 +108,7 @@ export default function Layout() {
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar - Bigger */}
+      {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
@@ -159,7 +161,7 @@ export default function Layout() {
         </Box>
       </Drawer>
 
-      {/* Main Content - Full Screen */}
+      {/* Main Content */}
       <Box 
         component="main" 
         sx={{ 

@@ -40,7 +40,7 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { observabilityApi } from '../services/api';
 
-const REPO_ID = 1;
+const REPO_ID = parseInt(localStorage.getItem('repo_id')) || 1;
 
 // Sample data for category breakdown
 const categoryData = [

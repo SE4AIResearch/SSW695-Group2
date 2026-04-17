@@ -21,7 +21,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { configApi, observabilityApi } from '../services/api';
 
-const REPO_ID = 1; // Change this to your actual repo_id
+const REPO_ID = parseInt(localStorage.getItem('repo_id')) || 2; // UPDATED!
 
 export default function Team() {
   const [developers, setDevelopers] = useState([]);
@@ -64,10 +64,10 @@ export default function Team() {
       });
     } else {
       setEditingDev(null);
-      setFormData({ 
-        github_login: '', 
-        skills: '', 
-        max_capacity: 5 
+      setFormData({
+        github_login: '',
+        skills: '',
+        max_capacity: 5
       });
     }
     setOpenDialog(true);
@@ -81,12 +81,11 @@ export default function Team() {
 
   const handleSubmit = async () => {
     try {
-      // Parse skills from comma-separated string to array
       const skillsArray = formData.skills
         .split(',')
         .map(s => s.trim())
         .filter(Boolean);
-      
+
       if (!formData.github_login) {
         setError('GitHub username is required');
         return;
@@ -98,20 +97,18 @@ export default function Team() {
       }
 
       if (editingDev) {
-        // Update existing developer
         await configApi.updateDeveloper(REPO_ID, editingDev.github_login, {
           skills: skillsArray,
           max_capacity: parseInt(formData.max_capacity)
         });
       } else {
-        // Add new developer - match backend schema exactly
         await configApi.addDeveloper(REPO_ID, {
           github_login: formData.github_login,
           skills: skillsArray,
           max_capacity: parseInt(formData.max_capacity)
         });
       }
-      
+
       handleCloseDialog();
       fetchDevelopers();
       setError('');
@@ -198,9 +195,9 @@ export default function Team() {
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
                     {dev.skills.map((skill, idx) => (
-                      <Chip 
-                        key={idx} 
-                        label={skill} 
+                      <Chip
+                        key={idx}
+                        label={skill}
                         size="small"
                         sx={{ backgroundColor: '#EDE9FE', color: '#7C3AED' }}
                       />
@@ -241,7 +238,6 @@ export default function Team() {
         )}
       </Grid>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 600 }}>
           {editingDev ? 'Edit Developer' : 'Add Developer'}
@@ -263,9 +259,9 @@ export default function Team() {
             value={formData.skills}
             onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
             margin="normal"
-            placeholder="React, Python, API, Database"
+            placeholder="bug, feature, docs, security, question"
             required
-            helperText="Comma-separated list of skills"
+            helperText="Allowed: bug, feature, docs, security, question (comma-separated)"
           />
           <TextField
             fullWidth

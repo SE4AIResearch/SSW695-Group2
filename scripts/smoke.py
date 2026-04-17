@@ -31,6 +31,10 @@ import argparse
 import asyncio
 import sys
 
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+import sys
+
 # scripts/ is on sys.path when running as `python scripts/smoke.py`
 # smoke/ is therefore importable as the `smoke` package.
 from dotenv import load_dotenv
