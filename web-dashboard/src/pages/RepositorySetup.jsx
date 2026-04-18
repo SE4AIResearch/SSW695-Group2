@@ -18,6 +18,7 @@ export default function RepositorySetup() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formData, setFormData] = useState({
+    repo_id: '',
     installation_id: '',
     repo_full_name: '',
     // CORRECT VALUES - matching backend validation
@@ -43,6 +44,7 @@ export default function RepositorySetup() {
 
     try {
       const payload = {
+        repo_id: parseInt(formData.repo_id),
         installation_id: parseInt(formData.installation_id),
         repo_full_name: formData.repo_full_name,
         config: {
@@ -133,6 +135,17 @@ export default function RepositorySetup() {
 
             <TextField
               fullWidth
+              label="GitHub Repository ID"
+              type="number"
+              value={formData.repo_id}
+              onChange={handleChange('repo_id')}
+              margin="normal"
+              required
+              helperText="Find this at: github.com/repos/owner/repo-name (API) or in the installation webhook payload"
+            />
+
+            <TextField
+              fullWidth
               label="GitHub Installation ID"
               type="number"
               value={formData.installation_id}
@@ -201,7 +214,7 @@ export default function RepositorySetup() {
 
           <Box sx={{ mt: 3, p: 2, backgroundColor: '#FEF3C7', borderRadius: 2 }}>
             <Typography variant="caption" fontWeight="bold" color="#92400E">
-              💡 Quick Test: Just fill Installation ID and Repository name, leave everything else as default!
+              💡 Quick Test: Fill in GitHub Repository ID, Installation ID and Repository Full Name — leave everything else as default!
             </Typography>
           </Box>
         </CardContent>

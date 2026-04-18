@@ -40,8 +40,6 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { observabilityApi } from '../services/api';
 
-const REPO_ID = parseInt(localStorage.getItem('repo_id')) || 1;
-
 // Sample data for category breakdown
 const categoryData = [
   { name: 'Frontend', value: 45, color: '#7C3AED' },
@@ -66,21 +64,22 @@ const getPriorityColor = (priority) => {
 };
 
 export default function Dashboard() {
+  const repoId = parseInt(localStorage.getItem('repo_id')) || null;
   const [timePeriod, setTimePeriod] = useState('Last 7 Days');
   const [searchQuery, setSearchQuery] = useState('');
   const [triageHistory, setTriageHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchData();
+    if (repoId) fetchData();
   }, []);
 
   const fetchData = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await observabilityApi.getTriageHistory(REPO_ID, { 
+      const response = await observabilityApi.getTriageHistory(repoId, {
         limit: 100,
         offset: 0 
       });
@@ -130,6 +129,16 @@ export default function Dashboard() {
       : 87,
     avgTimeSaved: 8
   };
+
+  if (!repoId) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <Alert severity="info" sx={{ maxWidth: 500 }}>
+          No repository enrolled yet. Go to <strong>Setup</strong> first.
+        </Alert>
+      </Box>
+    );
+  }
 
   if (loading) {
     return (

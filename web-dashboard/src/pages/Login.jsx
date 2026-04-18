@@ -157,7 +157,7 @@ export default function Login() {
             <Typography 
               variant="body2" 
               color="text.secondary" 
-              align="center" 
+              align="center"  
               sx={{ mb: 3 }}
             >
               Automate Bug Triaging With Intelligence

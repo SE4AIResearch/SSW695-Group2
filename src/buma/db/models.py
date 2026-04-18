@@ -49,7 +49,7 @@ class RepoConfig(Base):
 
     __tablename__ = "repo_config"
 
-    repo_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    repo_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     installation_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     repo_full_name: Mapped[str] = mapped_column(Text, nullable=False)
 

@@ -21,29 +21,31 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { configApi, observabilityApi } from '../services/api';
 
-const REPO_ID = parseInt(localStorage.getItem('repo_id')) || 2; // UPDATED!
+// const REPO_ID = parseInt(localStorage.getItem('repo_id')) || 2; // UPDATED!
 
 export default function Team() {
+  const [repoId, setRepoId] = useState(parseInt(localStorage.getItem('repo_id')) || null);
   const [developers, setDevelopers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingDev, setEditingDev] = useState(null);
   const [formData, setFormData] = useState({
     github_login: '',
     skills: '',
-    max_capacity: 5
+    max_capacity: 5,
+    repo_id: localStorage.getItem('repo_id') || ''
   });
 
   useEffect(() => {
-    fetchDevelopers();
-  }, []);
+    if (repoId) fetchDevelopers(); 
+  }, [repoId]);
 
   const fetchDevelopers = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await observabilityApi.getWorkload(REPO_ID);
+      const response = await observabilityApi.getWorkload(repoId);
       console.log('Developers loaded:', response.data);
       setDevelopers(response.data.developers || []);
     } catch (err) {
@@ -60,14 +62,16 @@ export default function Team() {
       setFormData({
         github_login: dev.github_login,
         skills: dev.skills.join(', '),
-        max_capacity: dev.max_capacity
+        max_capacity: dev.max_capacity,
+        repo_id: repoId || localStorage.getItem('repo_id') || ''
       });
     } else {
       setEditingDev(null);
       setFormData({
         github_login: '',
         skills: '',
-        max_capacity: 5
+        max_capacity: 5,
+        repo_id: repoId || localStorage.getItem('repo_id') || ''
       });
     }
     setOpenDialog(true);
@@ -76,7 +80,7 @@ export default function Team() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingDev(null);
-    setFormData({ github_login: '', skills: '', max_capacity: 5 });
+    setFormData({ github_login: '', skills: '', max_capacity: 5, repo_id: localStorage.getItem('repo_id') || '' });
   };
 
   const handleSubmit = async () => {
@@ -97,16 +101,20 @@ export default function Team() {
       }
 
       if (editingDev) {
-        await configApi.updateDeveloper(REPO_ID, editingDev.github_login, {
+        await configApi.updateDeveloper(repoId, editingDev.github_login, {
           skills: skillsArray,
           max_capacity: parseInt(formData.max_capacity)
         });
       } else {
-        await configApi.addDeveloper(REPO_ID, {
+        const targetRepoId = parseInt(formData.repo_id);
+        await configApi.addDeveloper(targetRepoId, {
           github_login: formData.github_login,
           skills: skillsArray,
           max_capacity: parseInt(formData.max_capacity)
         });
+        // Sync state so fetch, edit, delete all follow the same repo
+        localStorage.setItem('repo_id', targetRepoId);
+        setRepoId(targetRepoId);
       }
 
       handleCloseDialog();
@@ -122,7 +130,7 @@ export default function Team() {
   const handleDelete = async (githubLogin) => {
     if (window.confirm(`Remove ${githubLogin}?`)) {
       try {
-        await configApi.deleteDeveloper(REPO_ID, githubLogin);
+        await configApi.deleteDeveloper(repoId, githubLogin);
         fetchDevelopers();
         setError('');
       } catch (err) {
@@ -131,6 +139,16 @@ export default function Team() {
       }
     }
   };
+
+  if (!repoId) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <Alert severity="info" sx={{ maxWidth: 500 }}>
+          No repository enrolled yet. Go to <strong>Repository Setup</strong> first.
+        </Alert>
+      </Box>
+    );
+  }
 
   if (loading) {
     return (
@@ -243,6 +261,17 @@ export default function Team() {
           {editingDev ? 'Edit Developer' : 'Add Developer'}
         </DialogTitle>
         <DialogContent>
+          <TextField
+            fullWidth
+            label="Repository ID"
+            type="number"
+            value={formData.repo_id}
+            onChange={(e) => setFormData({ ...formData, repo_id: e.target.value })}
+            margin="normal"
+            required
+            disabled={!!editingDev}
+            helperText={editingDev ? "Cannot change repo for existing developer" : "GitHub numeric repo ID"}
+          />
           <TextField
             fullWidth
             label="GitHub Username"

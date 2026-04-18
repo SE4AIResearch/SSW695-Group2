@@ -38,6 +38,7 @@ class ConfigService:
 
     async def enroll_repo(self, body: RepoConfigCreate) -> RepoConfigResponse:
         record = await self._repo_config_repo.create(
+            repo_id=body.repo_id,
             installation_id=body.installation_id,
             repo_full_name=body.repo_full_name,
             config=body.config.model_dump(),

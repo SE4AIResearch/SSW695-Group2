@@ -55,6 +55,7 @@ class RepoConfigSettings(BaseModel):
 
 
 class RepoConfigCreate(BaseModel):
+    repo_id: int          # GitHub's numeric repo ID
     installation_id: int
     repo_full_name: str
     config: RepoConfigSettings = Field(default_factory=RepoConfigSettings)

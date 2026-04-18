@@ -12,8 +12,9 @@ class RepoConfigRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def create(self, installation_id: int, repo_full_name: str, config: dict) -> RepoConfig:
+    async def create(self, repo_id: int, installation_id: int, repo_full_name: str, config: dict) -> RepoConfig:
         record = RepoConfig(
+            repo_id=repo_id,
             installation_id=installation_id,
             repo_full_name=repo_full_name,
             config=config,
