@@ -72,7 +72,8 @@ def test_repo_config_invalid_default_priority():
 
 
 def test_repo_config_create_required_fields():
-    r = RepoConfigCreate(installation_id=1, repo_full_name="org/repo")
+    r = RepoConfigCreate(repo_id=42, installation_id=1, repo_full_name="org/repo")
+    assert r.repo_id == 42
     assert r.installation_id == 1
     assert r.repo_full_name == "org/repo"
     assert r.config.defaults.category == "bug"

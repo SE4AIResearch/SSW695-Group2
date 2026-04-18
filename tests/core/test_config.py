@@ -16,10 +16,13 @@ def test_settings_required_fields():
 
 
 def test_settings_redis_url_default():
-    s = Settings(
-        database_url="postgresql+psycopg://test:test@localhost/test",
-        github_webhook_secret="my-secret",
-    )
+    with patch.dict(os.environ, {}, clear=False):
+        os.environ.pop("REDIS_URL", None)
+        s = Settings(
+            _env_file=None,
+            database_url="postgresql+psycopg://test:test@localhost/test",
+            github_webhook_secret="my-secret",
+        )
     assert s.redis_url == "redis://localhost:6379/0"
 
 
@@ -48,10 +51,13 @@ def test_oauth_fields_default_to_none():
 
 
 def test_session_secret_has_dev_default():
-    s = Settings(
-        database_url="postgresql+psycopg://test:test@localhost/test",
-        github_webhook_secret="secret",
-    )
+    with patch.dict(os.environ, {}, clear=False):
+        os.environ.pop("SESSION_SECRET", None)
+        s = Settings(
+            _env_file=None,
+            database_url="postgresql+psycopg://test:test@localhost/test",
+            github_webhook_secret="secret",
+        )
     assert s.session_secret == "dev-secret-change-in-production!"
 
 
