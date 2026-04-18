@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
-  Box, 
-  Drawer, 
-  AppBar, 
-  Toolbar, 
-  List, 
-  ListItem, 
-  ListItemIcon, 
-  ListItemText, 
+import {
+  Box,
+  Drawer,
+  AppBar,
+  Toolbar,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   Typography,
   IconButton,
   Menu,
@@ -127,8 +127,7 @@ export default function Layout() {
         <Box sx={{ overflow: 'auto', mt: 3, px: 2 }}>
           <List>
             {menuItems.map((item) => (
-              <ListItem 
-                button 
+              <ListItemButton
                 key={item.text}
                 onClick={() => navigate(item.path)}
                 sx={{
@@ -155,7 +154,7 @@ export default function Layout() {
                     fontWeight: location.pathname === item.path ? 600 : 500
                   }}
                 />
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
         </Box>

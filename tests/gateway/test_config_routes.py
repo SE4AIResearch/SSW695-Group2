@@ -154,7 +154,7 @@ async def test_list_repos_limit_exceeds_max_returns_422(client):
 async def test_enroll_repo_returns_201(client):
     response = await client.post(
         "/api/config/repos",
-        json={"installation_id": 999, "repo_full_name": "org/repo"},
+        json={"repo_id": 12345, "installation_id": 999, "repo_full_name": "org/repo"},
     )
     assert response.status_code == 201
     assert response.json()["repo_id"] == 42

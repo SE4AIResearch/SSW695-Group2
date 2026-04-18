@@ -78,7 +78,7 @@ def svc(mock_session, mock_repo_config_repo, mock_dev_repo):
 
 async def test_enroll_repo_returns_response(svc, mock_repo_config_repo, mock_session):
     mock_repo_config_repo.create.return_value = _make_repo_orm()
-    body = RepoConfigCreate(installation_id=999, repo_full_name="org/repo")
+    body = RepoConfigCreate(repo_id=42, installation_id=999, repo_full_name="org/repo")
     result = await svc.enroll_repo(body)
     assert result.repo_id == 42
     assert result.repo_full_name == "org/repo"
@@ -87,7 +87,7 @@ async def test_enroll_repo_returns_response(svc, mock_repo_config_repo, mock_ses
 
 async def test_enroll_repo_passes_config_dict(svc, mock_repo_config_repo):
     mock_repo_config_repo.create.return_value = _make_repo_orm()
-    body = RepoConfigCreate(installation_id=999, repo_full_name="org/repo")
+    body = RepoConfigCreate(repo_id=42, installation_id=999, repo_full_name="org/repo")
     await svc.enroll_repo(body)
     _, kwargs = mock_repo_config_repo.create.call_args
     assert "config" in kwargs

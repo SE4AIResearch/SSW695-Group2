@@ -31,7 +31,7 @@ class GitHubClient:
 
     def __init__(self, app_id: int, private_key_pem: str) -> None:
         self._app_id = app_id
-        self._private_key_pem = private_key_pem
+        self._private_key_pem = private_key_pem.replace("\\n", "\n")
 
     # ------------------------------------------------------------------
     # Public API
