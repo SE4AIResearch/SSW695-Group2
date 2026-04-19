@@ -1,20 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CircularProgress, Box, Typography, Alert } from '@mui/material';
 import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState('');
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    // Prevent double-execution in React 18 Strict Mode
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     const handleGitHubCallback = async () => {
-      // Get the authorization code from URL
       const code = searchParams.get('code');
       const errorParam = searchParams.get('error');
 
-      // Check if user denied access
       if (errorParam) {
         setError('GitHub authentication was cancelled');
         setTimeout(() => navigate('/login'), 2000);
@@ -28,29 +33,21 @@ export default function AuthCallback() {
       }
 
       try {
-        // Send code to your backend
         const response = await axios.post(
-          'http://localhost:8000/api/v1/auth/github',
+          `${API_URL}/api/v1/auth/github`,
           { code },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
+          { headers: { 'Content-Type': 'application/json' } }
         );
 
         const { token, user } = response.data;
-
-        // Save to localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
 
-        // Redirect to dashboard
         navigate('/dashboard');
       } catch (error) {
         console.error('GitHub authentication error:', error);
         setError(
-          error.response?.data?.message || 
+          error.response?.data?.message ||
           'Failed to authenticate with GitHub. Please try again.'
         );
         setTimeout(() => navigate('/login'), 3000);

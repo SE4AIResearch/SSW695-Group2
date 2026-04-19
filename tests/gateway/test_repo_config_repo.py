@@ -42,13 +42,13 @@ def repo(mock_session):
 
 
 async def test_create_adds_and_flushes(repo, mock_session):
-    await repo.create(installation_id=999, repo_full_name="org/repo", config=CONFIG)
+    await repo.create(repo_id=REPO_ID, installation_id=999, repo_full_name="org/repo", config=CONFIG)
     mock_session.add.assert_called_once()
     mock_session.flush.assert_called_once()
 
 
 async def test_create_returns_repo_config_orm(repo):
-    result = await repo.create(installation_id=999, repo_full_name="org/repo", config=CONFIG)
+    result = await repo.create(repo_id=REPO_ID, installation_id=999, repo_full_name="org/repo", config=CONFIG)
     assert result is not None
 
 

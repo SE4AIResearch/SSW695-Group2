@@ -129,7 +129,7 @@ export default function Login() {
           >
             Automate Bug Triaging With{' '}
             <Box component="span" sx={{ color: '#7C3AED' }}>
-              AI-Powered Intelligence
+              Intelligence
             </Box>
           </Typography>
         </Box>
@@ -157,10 +157,10 @@ export default function Login() {
             <Typography 
               variant="body2" 
               color="text.secondary" 
-              align="center" 
+              align="center"  
               sx={{ mb: 3 }}
             >
-              Automate Bug Triaging With AI-Powered Intelligence
+              Automate Bug Triaging With Intelligence
             </Typography>
 
             {/* Error Alert */}
