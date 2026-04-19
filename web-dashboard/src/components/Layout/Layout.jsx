@@ -20,11 +20,13 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { authService } from '../../services/auth';
 import axios from 'axios';
+import FolderIcon from '@mui/icons-material/Folder';
 
 const drawerWidth = 260;
 
 const menuItems = [
   { text: 'Home', icon: <HomeIcon />, path: '/dashboard' },
+  { text: 'Repositories', icon: <FolderIcon />, path: '/repositories' }, 
   { text: 'People', icon: <PeopleIcon />, path: '/team' },
   { text: 'Setup', icon: <SettingsIcon />, path: '/setup' },
 ];

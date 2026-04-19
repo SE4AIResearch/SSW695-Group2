@@ -3,7 +3,6 @@ import axios from 'axios';
 const GATEWAY_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000'; 
 const API_URL = `${GATEWAY_URL}/api/v1`; 
 
-
 export const authService = {
   // Regular login - with fallback to mock
   login: async (email, password) => {
@@ -19,12 +18,13 @@ export const authService = {
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       
-      return { success: true, user };
+      return { success: true, user, isMock: false };
+      
     } catch (error) {
       console.error('Backend login failed, using mock login:', error);
       
       // FALLBACK: Mock login when backend is not available
-      await new Promise(resolve => setTimeout(resolve, 300)); // Simulate delay
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       const mockUser = {
         id: 1,
@@ -38,7 +38,11 @@ export const authService = {
       localStorage.setItem('token', mockToken);
       localStorage.setItem('user', JSON.stringify(mockUser));
       
-      return { success: true, user: mockUser };
+      return { 
+        success: true, 
+        user: mockUser,
+        isMock: true
+      };
     }
   },
 
