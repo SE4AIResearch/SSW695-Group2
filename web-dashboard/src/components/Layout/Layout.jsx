@@ -19,13 +19,14 @@ import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { authService } from '../../services/auth';
+import axios from 'axios';
 
 const drawerWidth = 260;
 
 const menuItems = [
   { text: 'Home', icon: <HomeIcon />, path: '/dashboard' },
   { text: 'People', icon: <PeopleIcon />, path: '/team' },
-  { text: 'Setup', icon: <SettingsIcon />, path: '/setup' }, // Added
+  { text: 'Setup', icon: <SettingsIcon />, path: '/setup' },
 ];
 
 export default function Layout() {
@@ -42,9 +43,38 @@ export default function Layout() {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      // Call backend logout endpoint
+      await axios.post('http://localhost:8000/auth/logout', {}, {
+        headers: {
+          Authorization: `Bearer ${authService.getToken()}`
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with logout even if backend fails
+    } finally {
+      // Clear local storage and redirect
+      authService.logout();
+      navigate('/login');
+    }
+  };
+
+  // Get user display info
+  const getDisplayName = () => {
+    if (!user) return 'User';
+    return user.name || user.github_username || user.login || user.email?.split('@')[0] || 'User';
+  };
+
+  const getDisplayEmail = () => {
+    if (!user) return 'user@example.com';
+    return user.email || `${user.github_username || user.login}@github.com`;
+  };
+
+  const getAvatarInitial = () => {
+    const name = getDisplayName();
+    return name.charAt(0).toUpperCase();
   };
 
   return (
@@ -78,10 +108,10 @@ export default function Layout() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ textAlign: 'right' }}>
               <Typography variant="body1" fontWeight="600" sx={{ color: '#333' }}>
-                Max
+                {getDisplayName()}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                Email
+                {getDisplayEmail()}
               </Typography>
             </Box>
             <IconButton onClick={handleMenu}>
@@ -94,7 +124,7 @@ export default function Layout() {
                   fontSize: '1.1rem'
                 }}
               >
-                M
+                {getAvatarInitial()}
               </Avatar>
             </IconButton>
             <Menu

@@ -7,7 +7,6 @@ import {
   TextField, 
   Button, 
   Typography,
-  Container,
   Alert,
   Divider,
   CircularProgress,
@@ -17,8 +16,6 @@ import {
 import GitHubIcon from '@mui/icons-material/GitHub';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { authService } from '../services/auth';
-
-const GITHUB_CLIENT_ID = process.env.REACT_APP_GITHUB_CLIENT_ID || 'your_client_id';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -48,10 +45,8 @@ export default function Login() {
   };
 
   const handleGitHubLogin = () => {
-    const redirectUri = encodeURIComponent('http://localhost:3000/auth/callback');
-    const scope = encodeURIComponent('read:user user:email');
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=${scope}`;
-    window.location.href = githubAuthUrl;
+    // Backend handles the entire OAuth flow
+    window.location.href = 'http://localhost:8000/auth/github';
   };
 
   return (
@@ -91,7 +86,7 @@ export default function Login() {
         </Toolbar>
       </AppBar>
 
-      {/* Main Content with Background */}
+      {/* Main Content */}
       <Box
         sx={{
           flexGrow: 1,
@@ -104,7 +99,7 @@ export default function Login() {
           padding: '0 100px',
         }}
       >
-        {/* Background Chart Pattern (simulated) */}
+        {/* Background Pattern */}
         <Box
           sx={{
             position: 'absolute',
@@ -117,7 +112,7 @@ export default function Login() {
           }}
         />
 
-        {/* Left Side - Headline */}
+        {/* Left - Headline */}
         <Box sx={{ maxWidth: 500, color: 'white', zIndex: 1 }}>
           <Typography 
             variant="h2" 
@@ -134,7 +129,7 @@ export default function Login() {
           </Typography>
         </Box>
 
-        {/* Right Side - Login Card */}
+        {/* Right - Login Card */}
         <Card 
           sx={{ 
             width: '100%', 
@@ -145,7 +140,6 @@ export default function Login() {
           }}
         >
           <CardContent sx={{ p: 4 }}>
-            {/* Login Header */}
             <Typography 
               variant="h4" 
               gutterBottom 
@@ -163,14 +157,13 @@ export default function Login() {
               Automate Bug Triaging With Intelligence
             </Typography>
 
-            {/* Error Alert */}
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
               </Alert>
             )}
 
-            {/* GitHub Login Button */}
+            {/* GitHub Login */}
             <Button
               fullWidth
               variant="outlined"
@@ -210,8 +203,7 @@ export default function Login() {
                 margin="normal"
                 required
                 disabled={loading}
-                variant="outlined"
-                placeholder="inak369@gmail.com"
+                placeholder="admin@test.com"
                 sx={{ mb: 2 }}
               />
               <TextField
@@ -223,7 +215,6 @@ export default function Login() {
                 margin="normal"
                 required
                 disabled={loading}
-                variant="outlined"
                 placeholder="••••••••"
                 sx={{ mb: 3 }}
               />
@@ -249,7 +240,7 @@ export default function Login() {
               </Button>
             </form>
 
-            {/* Development Info */}
+            {/* Dev Info */}
             <Box 
               sx={{ 
                 mt: 3, 
@@ -262,9 +253,7 @@ export default function Login() {
               <Typography variant="caption" color="text.secondary">
                 <strong>For Development:</strong>
                 <br />
-                Use GitHub login or test credentials:
-                <br />
-                Email: admin@test.com | Password: admin123
+                GitHub OAuth or test: admin@test.com / admin123
               </Typography>
             </Box>
           </CardContent>
