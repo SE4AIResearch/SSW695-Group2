@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -26,6 +26,7 @@ import { configApi, observabilityApi } from '../services/api';
 export default function Team() {
   const [repoId, setRepoId] = useState(parseInt(localStorage.getItem('repo_id')) || null);
   const [developers, setDevelopers] = useState([]);
+  const loadedOnce = useRef(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
@@ -38,16 +39,19 @@ export default function Team() {
   });
 
   useEffect(() => {
-    if (repoId) fetchDevelopers(); 
+    if (!repoId) return;
+    fetchDevelopers();
+    const interval = setInterval(fetchDevelopers, 15000);
+    return () => clearInterval(interval);
   }, [repoId]);
 
   const fetchDevelopers = async () => {
-    setLoading(true);
+    if (!loadedOnce.current) setLoading(true);
     setError('');
     try {
       const response = await observabilityApi.getWorkload(repoId);
-      console.log('Developers loaded:', response.data);
       setDevelopers(response.data.developers || []);
+      loadedOnce.current = true;
     } catch (err) {
       console.error('Error loading developers:', err);
       setError('Failed to load developers. Make sure backend is running on http://localhost:8000');
