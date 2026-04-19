@@ -22,18 +22,27 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setInfo('');
     setLoading(true);
 
     try {
       const result = await authService.login(email, password);
       
       if (result.success) {
-        navigate('/dashboard');
+        if (result.isMock) {
+          // Show info message, DON'T auto-redirect
+          setInfo('ℹ️ Development Mode: Backend email login not available. Using mock authentication.');
+          // User must click Continue button to proceed
+        } else {
+          // Real backend login - redirect immediately
+          navigate('/dashboard');
+        }
       } else {
         setError(result.error);
       }
@@ -45,7 +54,6 @@ export default function Login() {
   };
 
   const handleGitHubLogin = () => {
-    // Backend handles the entire OAuth flow
     window.location.href = 'http://localhost:8000/auth/github';
   };
 
@@ -157,10 +165,40 @@ export default function Login() {
               Automate Bug Triaging With Intelligence
             </Typography>
 
+            {/* Error Alert */}
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
               </Alert>
+            )}
+
+            {/* Info Alert with Continue Button */}
+            {info && (
+              <>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  {info}
+                </Alert>
+                
+                {/* Continue to Dashboard Button */}
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={() => navigate('/dashboard')}
+                  sx={{ 
+                    mb: 2,
+                    py: 1.5,
+                    backgroundColor: '#7C3AED',
+                    textTransform: 'none',
+                    fontSize: '15px',
+                    fontWeight: 'bold',
+                    '&:hover': {
+                      backgroundColor: '#6D28D9'
+                    }
+                  }}
+                >
+                  Continue to Dashboard
+                </Button>
+              </>
             )}
 
             {/* GitHub Login */}
@@ -253,7 +291,7 @@ export default function Login() {
               <Typography variant="caption" color="text.secondary">
                 <strong>For Development:</strong>
                 <br />
-                GitHub OAuth or test: admin@test.com / admin123
+                GitHub OAuth (production) or test: admin@test.com / admin123
               </Typography>
             </Box>
           </CardContent>
