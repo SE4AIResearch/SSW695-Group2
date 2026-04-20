@@ -20,10 +20,13 @@ api.interceptors.request.use((config) => {
 
 // CONFIG APIs
 export const configApi = {
+  // Repository management
+  getAllRepos: (params = {}) => api.get('/api/config/repos', { params }), // ← ADDED
   enrollRepo: (data) => api.post('/api/config/repos', data),
   getRepo: (repoId) => api.get(`/api/config/repos/${repoId}`),
   updateRepo: (repoId, data) => api.patch(`/api/config/repos/${repoId}`, data),
   
+  // Developer management
   addDeveloper: (repoId, data) => api.post(`/api/config/repos/${repoId}/developers`, data),
   updateDeveloper: (repoId, githubLogin, data) => 
     api.patch(`/api/config/repos/${repoId}/developers/${githubLogin}`, data),

@@ -7,7 +7,6 @@ import {
   TextField, 
   Button, 
   Typography,
-  Container,
   Alert,
   Divider,
   CircularProgress,
@@ -18,25 +17,32 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { authService } from '../services/auth';
 
-const GITHUB_CLIENT_ID = process.env.REACT_APP_GITHUB_CLIENT_ID || 'your_client_id';
-
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setInfo('');
     setLoading(true);
 
     try {
       const result = await authService.login(email, password);
       
       if (result.success) {
-        navigate('/dashboard');
+        if (result.isMock) {
+          // Show info message, DON'T auto-redirect
+          setInfo('ℹ️ Development Mode: Backend email login not available. Using mock authentication.');
+          // User must click Continue button to proceed
+        } else {
+          // Real backend login - redirect immediately
+          navigate('/dashboard');
+        }
       } else {
         setError(result.error);
       }
@@ -48,10 +54,7 @@ export default function Login() {
   };
 
   const handleGitHubLogin = () => {
-    const redirectUri = encodeURIComponent('http://localhost:3000/auth/callback');
-    const scope = encodeURIComponent('read:user user:email');
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=${scope}`;
-    window.location.href = githubAuthUrl;
+    window.location.href = 'http://localhost:8000/auth/github';
   };
 
   return (
@@ -91,7 +94,7 @@ export default function Login() {
         </Toolbar>
       </AppBar>
 
-      {/* Main Content with Background */}
+      {/* Main Content */}
       <Box
         sx={{
           flexGrow: 1,
@@ -104,7 +107,7 @@ export default function Login() {
           padding: '0 100px',
         }}
       >
-        {/* Background Chart Pattern (simulated) */}
+        {/* Background Pattern */}
         <Box
           sx={{
             position: 'absolute',
@@ -117,7 +120,7 @@ export default function Login() {
           }}
         />
 
-        {/* Left Side - Headline */}
+        {/* Left - Headline */}
         <Box sx={{ maxWidth: 500, color: 'white', zIndex: 1 }}>
           <Typography 
             variant="h2" 
@@ -134,7 +137,7 @@ export default function Login() {
           </Typography>
         </Box>
 
-        {/* Right Side - Login Card */}
+        {/* Right - Login Card */}
         <Card 
           sx={{ 
             width: '100%', 
@@ -145,7 +148,6 @@ export default function Login() {
           }}
         >
           <CardContent sx={{ p: 4 }}>
-            {/* Login Header */}
             <Typography 
               variant="h4" 
               gutterBottom 
@@ -170,7 +172,36 @@ export default function Login() {
               </Alert>
             )}
 
-            {/* GitHub Login Button */}
+            {/* Info Alert with Continue Button */}
+            {info && (
+              <>
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  {info}
+                </Alert>
+                
+                {/* Continue to Dashboard Button */}
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={() => navigate('/dashboard')}
+                  sx={{ 
+                    mb: 2,
+                    py: 1.5,
+                    backgroundColor: '#7C3AED',
+                    textTransform: 'none',
+                    fontSize: '15px',
+                    fontWeight: 'bold',
+                    '&:hover': {
+                      backgroundColor: '#6D28D9'
+                    }
+                  }}
+                >
+                  Continue to Dashboard
+                </Button>
+              </>
+            )}
+
+            {/* GitHub Login */}
             <Button
               fullWidth
               variant="outlined"
@@ -210,8 +241,7 @@ export default function Login() {
                 margin="normal"
                 required
                 disabled={loading}
-                variant="outlined"
-                placeholder="inak369@gmail.com"
+                placeholder="admin@test.com"
                 sx={{ mb: 2 }}
               />
               <TextField
@@ -223,7 +253,6 @@ export default function Login() {
                 margin="normal"
                 required
                 disabled={loading}
-                variant="outlined"
                 placeholder="••••••••"
                 sx={{ mb: 3 }}
               />
@@ -249,7 +278,7 @@ export default function Login() {
               </Button>
             </form>
 
-            {/* Development Info */}
+            {/* Dev Info */}
             <Box 
               sx={{ 
                 mt: 3, 
@@ -262,9 +291,7 @@ export default function Login() {
               <Typography variant="caption" color="text.secondary">
                 <strong>For Development:</strong>
                 <br />
-                Use GitHub login or test credentials:
-                <br />
-                Email: admin@test.com | Password: admin123
+                GitHub OAuth (production) or test: admin@test.com / admin123
               </Typography>
             </Box>
           </CardContent>
