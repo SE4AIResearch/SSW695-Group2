@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -10,6 +10,7 @@ from buma.schemas.api.developer_profile import (
     DeveloperProfileResponse,
     DeveloperProfileUpdate,
 )
+from buma.schemas.api.productivity import DeveloperProductivity, ProductivityBucket, ProductivityResponse
 from buma.schemas.api.repo_config import (
     RepoConfigCreate,
     RepoConfigResponse,
@@ -239,3 +240,75 @@ def test_triage_decision_response_from_attributes():
     r = TriageDecisionResponse.model_validate(FakeORM(), from_attributes=True)
     assert r.event_id == "evt-1"
     assert r.patch_state == "APPLIED"
+
+
+# ---------------------------------------------------------------------------
+# ProductivityBucket
+# ---------------------------------------------------------------------------
+
+
+def test_productivity_bucket_fields():
+    b = ProductivityBucket(period_start=date(2026, 4, 14), resolved=3)
+    assert b.period_start == date(2026, 4, 14)
+    assert b.resolved == 3
+
+
+# ---------------------------------------------------------------------------
+# DeveloperProductivity
+# ---------------------------------------------------------------------------
+
+
+def test_developer_productivity_with_avg():
+    d = DeveloperProductivity(
+        github_login="alice",
+        resolved_count=5,
+        avg_resolution_hours=12.5,
+        open_assignments=2,
+        max_capacity=5,
+        buckets=[ProductivityBucket(period_start=date(2026, 4, 14), resolved=2)],
+    )
+    assert d.github_login == "alice"
+    assert d.avg_resolution_hours == 12.5
+    assert len(d.buckets) == 1
+
+
+def test_developer_productivity_avg_none_when_no_resolutions():
+    d = DeveloperProductivity(
+        github_login="bob",
+        resolved_count=0,
+        avg_resolution_hours=None,
+        open_assignments=1,
+        max_capacity=5,
+        buckets=[],
+    )
+    assert d.avg_resolution_hours is None
+
+
+# ---------------------------------------------------------------------------
+# ProductivityResponse
+# ---------------------------------------------------------------------------
+
+
+def test_productivity_response_structure():
+    r = ProductivityResponse(
+        repo_id=42,
+        window="30d",
+        developers=[
+            DeveloperProductivity(
+                github_login="alice",
+                resolved_count=3,
+                avg_resolution_hours=8.0,
+                open_assignments=1,
+                max_capacity=5,
+                buckets=[],
+            )
+        ],
+    )
+    assert r.repo_id == 42
+    assert r.window == "30d"
+    assert len(r.developers) == 1
+
+
+def test_productivity_response_empty_team():
+    r = ProductivityResponse(repo_id=1, window="7d", developers=[])
+    assert r.developers == []
