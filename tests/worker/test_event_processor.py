@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
@@ -445,3 +445,134 @@ async def test_phase6_server_error_does_not_write_dlq() -> None:
     await processor.process(_make_event())
     added_types = [type(call.args[0]) for call in patch_session.add.call_args_list]
     assert DLQRecord not in added_types
+
+
+# ---------------------------------------------------------------------------
+# _handle_closed helpers
+# ---------------------------------------------------------------------------
+
+
+def _make_closed_event() -> NormalizedEvent:
+    return NormalizedEvent(
+        event_id="delivery-close-xyz",
+        delivery_id="delivery-close-xyz",
+        event_name="issues",
+        action="closed",
+        received_at=RECEIVED_AT,
+        installation_id=12345,
+        repo=RepoRef(id=111, full_name="owner/repo", private=False),
+        issue=IssueRef(
+            number=1,
+            id=999,
+            node_id="I_node",
+            url="https://api.github.com/repos/owner/repo/issues/1",
+            html_url="https://github.com/owner/repo/issues/1",
+            title="Bug",
+            body=None,
+            labels=[],
+            author_login="octocat",
+            created_at=RECEIVED_AT,
+            updated_at=RECEIVED_AT,
+        ),
+    )
+
+
+def _make_processor_handle_closed(
+    repo_config_result: RepoConfig | None,
+    decision_result: TriageDecision | None,
+) -> tuple[EventProcessorService, AsyncMock]:
+    """
+    Build a processor for _handle_closed tests.
+    Session 1 handles the RepoConfig lookup.
+    Session 2 handles the TriageDecision select + optional UPDATE + commit.
+    Returns (processor, session2) so tests can assert on session2.
+    """
+    session1 = AsyncMock()
+    session1.__aenter__ = AsyncMock(return_value=session1)
+    session1.__aexit__ = AsyncMock(return_value=False)
+    session1.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=repo_config_result)))
+
+    session2 = AsyncMock()
+    session2.__aenter__ = AsyncMock(return_value=session2)
+    session2.__aexit__ = AsyncMock(return_value=False)
+    # First execute: TriageDecision select. Second execute: UPDATE (may not be called).
+    decision_result_mock = MagicMock(scalar_one_or_none=MagicMock(return_value=decision_result))
+    session2.execute = AsyncMock(side_effect=[decision_result_mock, AsyncMock()])
+
+    mock_factory = MagicMock(side_effect=[session1, session2])
+    processor = EventProcessorService(session_factory=mock_factory)
+    return processor, session2
+
+
+# ---------------------------------------------------------------------------
+# _handle_closed tests
+# ---------------------------------------------------------------------------
+
+
+async def test_handle_closed_skips_unenrolled_repo() -> None:
+    processor, session2 = _make_processor_handle_closed(repo_config_result=None, decision_result=None)
+    # Must not raise; session2 should never be opened
+    await processor.process(_make_closed_event())
+    session2.__aenter__.assert_not_called()
+
+
+async def test_handle_closed_skips_unknown_issue() -> None:
+    config = MagicMock(spec=RepoConfig)
+    processor, session2 = _make_processor_handle_closed(repo_config_result=config, decision_result=None)
+    await processor.process(_make_closed_event())
+    # Session opened but commit must NOT be called — nothing to update
+    session2.commit.assert_not_awaited()
+
+
+async def test_handle_closed_sets_closed_at() -> None:
+    config = MagicMock(spec=RepoConfig)
+    decision = MagicMock(spec=TriageDecision)
+    decision.selected_assignee_login = "alice"
+    decision.closed_at = None
+
+    processor, _ = _make_processor_handle_closed(repo_config_result=config, decision_result=decision)
+
+    fixed_now = datetime(2026, 4, 20, 12, 0, 0, tzinfo=UTC)
+    with patch("buma.worker.services.event_processor.datetime") as mock_dt:
+        mock_dt.now.return_value = fixed_now
+        await processor.process(_make_closed_event())
+
+    assert decision.closed_at == fixed_now
+
+
+async def test_handle_closed_executes_update_for_assignee() -> None:
+    config = MagicMock(spec=RepoConfig)
+    decision = MagicMock(spec=TriageDecision)
+    decision.selected_assignee_login = "alice"
+    decision.closed_at = None
+
+    processor, session2 = _make_processor_handle_closed(repo_config_result=config, decision_result=decision)
+    await processor.process(_make_closed_event())
+
+    # Two execute calls: decision SELECT + open_assignments UPDATE
+    assert session2.execute.await_count == 2
+
+
+async def test_handle_closed_skips_update_when_no_assignee() -> None:
+    config = MagicMock(spec=RepoConfig)
+    decision = MagicMock(spec=TriageDecision)
+    decision.selected_assignee_login = None
+    decision.closed_at = None
+
+    processor, session2 = _make_processor_handle_closed(repo_config_result=config, decision_result=decision)
+    await processor.process(_make_closed_event())
+
+    # Only one execute call: decision SELECT; no UPDATE when no assignee
+    assert session2.execute.await_count == 1
+
+
+async def test_handle_closed_commits_when_decision_found() -> None:
+    config = MagicMock(spec=RepoConfig)
+    decision = MagicMock(spec=TriageDecision)
+    decision.selected_assignee_login = "alice"
+    decision.closed_at = None
+
+    processor, session2 = _make_processor_handle_closed(repo_config_result=config, decision_result=decision)
+    await processor.process(_make_closed_event())
+
+    session2.commit.assert_awaited_once()
