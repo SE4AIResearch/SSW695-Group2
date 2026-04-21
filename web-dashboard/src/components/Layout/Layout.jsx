@@ -21,6 +21,8 @@ import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { authService } from '../../services/auth';
 import axios from 'axios';
 import FolderIcon from '@mui/icons-material/Folder';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import BugReportIcon from '@mui/icons-material/BugReport';
 
 const drawerWidth = 260;
 
@@ -28,6 +30,8 @@ const menuItems = [
   { text: 'Home', icon: <HomeIcon />, path: '/dashboard' },
   { text: 'Repositories', icon: <FolderIcon />, path: '/repositories' }, 
   { text: 'People', icon: <PeopleIcon />, path: '/team' },
+  { text: 'Productivity', icon: <TrendingUpIcon />, path: '/productivity' },
+  { text: 'Issues', icon: <BugReportIcon />, path: '/issues' },
   { text: 'Setup', icon: <SettingsIcon />, path: '/setup' },
 ];
 
