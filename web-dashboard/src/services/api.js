@@ -39,7 +39,11 @@ export const observabilityApi = {
   getTriageHistory: (repoId, params = {}) => 
     api.get(`/api/triage/${repoId}`, { params }),
   getWorkload: (repoId) => api.get(`/api/workload/${repoId}`),
+  getProductivity: (repoId, window = '30d') => 
+    api.get(`/api/productivity/${repoId}`, { params: { window } }), // ← NEW
 };
+
+
 
 export const healthCheck = () => api.get('/health');
 

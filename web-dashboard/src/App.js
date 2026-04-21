@@ -11,6 +11,7 @@ import Team from './pages/Team';
 import Repositories from './pages/Repositories';
 import RepositorySetup from './pages/RepositorySetup';
 import ProtectedRoute from './components/ProtectedRoute';
+import Productivity from './pages/Productivity';
 
 const theme = createTheme({
   palette: {
@@ -43,6 +44,7 @@ function App() {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="team" element={<Team />} />
             <Route path="repositories" element={<Repositories />} />
+            <Route path="productivity" element={<Productivity />} />
             <Route path="setup" element={<RepositorySetup />} />
             <Route path="analytics" element={<div>Analytics - Coming Soon</div>} />
             <Route path="settings" element={<div>Settings - Coming Soon</div>} />
