@@ -68,15 +68,41 @@ async def test_ignored_if_not_issues_event(service, mock_repo):
     mock_repo.insert_if_new.assert_not_called()
 
 
-async def test_ignored_if_action_not_opened(service, mock_repo):
+async def test_ignored_if_action_not_relevant(service, mock_repo):
+    """Actions other than 'opened' and 'closed' are ignored."""
+    result = await service.handle(
+        delivery_id=DELIVERY_ID,
+        event_name="issues",
+        payload={**ISSUE_PAYLOAD, "action": "labeled"},
+        received_at=RECEIVED_AT,
+    )
+    assert result == IngestResult.IGNORED
+    mock_repo.insert_if_new.assert_not_called()
+
+
+async def test_queued_for_closed_action(service, mock_publisher, mock_session):
+    """issues.closed events must be queued for the worker to handle."""
     result = await service.handle(
         delivery_id=DELIVERY_ID,
         event_name="issues",
         payload={**ISSUE_PAYLOAD, "action": "closed"},
         received_at=RECEIVED_AT,
     )
-    assert result == IngestResult.IGNORED
-    mock_repo.insert_if_new.assert_not_called()
+    assert result == IngestResult.QUEUED
+    mock_publisher.publish.assert_called_once()
+    mock_session.commit.assert_called_once()
+
+
+async def test_closed_event_action_field_preserved(service, mock_publisher):
+    """NormalizedEvent built from a closed event must carry action='closed'."""
+    await service.handle(
+        delivery_id=DELIVERY_ID,
+        event_name="issues",
+        payload={**ISSUE_PAYLOAD, "action": "closed"},
+        received_at=RECEIVED_AT,
+    )
+    event: NormalizedEvent = mock_publisher.publish.call_args[0][0]
+    assert event.action == "closed"
 
 
 async def test_duplicate_if_not_new(service, mock_repo, mock_publisher, mock_session):

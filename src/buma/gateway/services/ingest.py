@@ -37,7 +37,7 @@ class IngestService:
     ) -> IngestResult:
         action: str | None = payload.get("action")
 
-        if event_name != "issues" or action != "opened":
+        if event_name != "issues" or action not in {"opened", "closed"}:
             return IngestResult.IGNORED
 
         installation_id: int = payload["installation"]["id"]

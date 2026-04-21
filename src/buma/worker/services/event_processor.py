@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 
 import httpx
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from buma.db.models import DLQRecord, IssueSnapshot, RepoConfig, TriageDecision
+from buma.db.models import DeveloperProfile, DLQRecord, IssueSnapshot, RepoConfig, TriageDecision
 from buma.schemas.normalized_event import NormalizedEvent
 from buma.worker.services.assignee_selector import AssigneeSelector
 from buma.worker.services.github_client import GitHubClient
@@ -63,6 +64,10 @@ class EventProcessorService:
         self._github_client = github_client
 
     async def process(self, event: NormalizedEvent) -> None:
+        if event.action == "closed":
+            await self._handle_closed(event)
+            return
+
         # Phase 1 — log receipt
         logger.info(
             "event_id=%s repo=%s issue=#%d action=%s — received, loading config",
@@ -195,6 +200,70 @@ class EventProcessorService:
             event.event_id,
             event.repo.full_name,
             event.issue.number,
+        )
+
+    async def _handle_closed(self, event: NormalizedEvent) -> None:
+        """Handle issues.closed — set closed_at and decrement assignee open_assignments."""
+        logger.info(
+            "event_id=%s repo=%s issue=#%d action=closed — received, loading config",
+            event.event_id,
+            event.repo.full_name,
+            event.issue.number,
+        )
+
+        async with self._session_factory() as session:
+            repo_config = await self._load_repo_config(session, event.repo.id)
+
+        if repo_config is None:
+            logger.info(
+                "event_id=%s repo=%s — not enrolled, skipping closed event",
+                event.event_id,
+                event.repo.full_name,
+            )
+            return
+
+        async with self._session_factory() as session:
+            result = await session.execute(
+                select(TriageDecision)
+                .where(
+                    TriageDecision.repo_id == event.repo.id,
+                    TriageDecision.issue_number == event.issue.number,
+                )
+                .order_by(TriageDecision.decided_at.desc())
+                .limit(1)
+            )
+            decision = result.scalar_one_or_none()
+
+            if decision is None:
+                logger.info(
+                    "event_id=%s repo=%s issue=#%d — no triage decision found, skipping closed event",
+                    event.event_id,
+                    event.repo.full_name,
+                    event.issue.number,
+                )
+                return
+
+            decision.closed_at = datetime.now(UTC)
+
+            if decision.selected_assignee_login:
+                await session.execute(
+                    update(DeveloperProfile)
+                    .where(
+                        DeveloperProfile.repo_id == event.repo.id,
+                        DeveloperProfile.github_login == decision.selected_assignee_login,
+                        DeveloperProfile.open_assignments > 0,
+                    )
+                    .values(open_assignments=DeveloperProfile.open_assignments - 1)
+                )
+
+            await session.commit()
+
+        logger.info(
+            "event_id=%s repo=%s issue=#%d assignee=%s — closed, open_assignments decremented",
+            event.event_id,
+            event.repo.full_name,
+            event.issue.number,
+            decision.selected_assignee_login or "none",
         )
 
     async def _handle_patch_error(self, event: NormalizedEvent, exc: httpx.HTTPStatusError) -> None:
