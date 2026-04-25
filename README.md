@@ -46,6 +46,18 @@ The queue enables retries and burst protection. The decision log enables traceab
 
 ---
 
+## Documentation
+
+| Document | Audience | Description |
+|---|---|---|
+| [User Guide](docs/user-guide.md) | New users, evaluators | Step-by-step: clone, configure GitHub App + OAuth App, run with Docker, set up ngrok, enroll a repo, and use Buma end-to-end |
+| [UAT Script](docs/uat.md) | Professor, peer reviewers | 10 acceptance test scenarios with pass/fail tables, defect log, and sign-off sheet |
+| [Worker Design](docs/worker-design.md) | Contributors | Design decisions DD-14 through DD-18 covering the worker architecture |
+
+> **Demo video:** https://stevens.zoom.us/rec/share/DpeGj3KoGgIkXlwmR3SSpuH__39eKzjHtn9kkbzFWN42T6k-wy4XPu1xdiyueV37.emvdavdLR5sSbDlY?startTime=1776824419000
+
+---
+
 ## Prerequisites
 
 - **Docker** and **Docker Compose** — required for both dev paths below
@@ -263,6 +275,10 @@ src/buma/
 tests/              — mirrors src/buma/
 migrations/         — Alembic migrations
 scripts/            — lint, test, codegen, smoke test
+docs/
+├── user-guide.md   — installation + usage guide for new users
+├── uat.md          — UAT script for professor and peer reviewers
+└── worker-design.md — worker architecture design decisions
 .devcontainer/      — VS Code dev container config
 .github/            — CI workflow + issue templates
 contributors/       — team notes
